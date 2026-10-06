@@ -41,3 +41,19 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase mobile config: kept locally, supplied to EAS as file env vars (never committed)
+google-services.json
+GoogleService-Info.plist
+
+# local env (keep .env.example committed)
+.env
+.env.*
+!.env.example
+
+# API response captures from scripts/capture-responses.mjs (may contain test-business data)
+.api-captures/
+
+# signing material
+*.keystore
+credentials.json

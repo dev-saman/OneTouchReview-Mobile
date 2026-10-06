@@ -1,0 +1,40 @@
+// https://docs.expo.dev/guides/using-eslint/
+const { defineConfig } = require('eslint/config');
+const expoConfig = require('eslint-config-expo/flat');
+
+/**
+ * Architecture guards: one module owns each sensitive dependency.
+ * - axios            → src/api/network.ts only
+ * - expo-secure-store → src/services/storage/tokenStorage.ts only
+ * - AsyncStorage      → src/services/storage/prefsStorage.ts only
+ */
+const restricted = [
+  { name: 'axios', message: 'Only src/api/network.ts may import axios. Use the API modules in src/api.' },
+  { name: 'expo-secure-store', message: 'Only src/services/storage/tokenStorage.ts may use SecureStore.' },
+  {
+    name: '@react-native-async-storage/async-storage',
+    message: 'Only src/services/storage/prefsStorage.ts may use AsyncStorage (safe preferences only).',
+  },
+];
+
+module.exports = defineConfig([
+  expoConfig,
+  {
+    ignores: ['dist/*', 'android/*', 'ios/*', '.expo/*', 'scripts/*', 'coverage/*'],
+  },
+  {
+    rules: {
+      'no-restricted-imports': ['error', { paths: restricted }],
+    },
+  },
+  {
+    files: [
+      'src/api/network.ts',
+      'src/services/storage/tokenStorage.ts',
+      'src/services/storage/prefsStorage.ts',
+      '**/__tests__/**',
+      'tests/**',
+    ],
+    rules: { 'no-restricted-imports': 'off' },
+  },
+]);
