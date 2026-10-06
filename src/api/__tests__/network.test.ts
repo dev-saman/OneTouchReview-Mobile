@@ -84,6 +84,27 @@ describe('401 / 5xx / offline', () => {
     expect(tokenStorage.get()?.token).toBe('tok-1');
   });
 
+  it('a request that never answers (stalled DNS) times out instead of hanging, keeping the token', async () => {
+    jest.useFakeTimers();
+    try {
+      await tokenStorage.save('tok-1', inDays(80));
+      mockHttp(
+        (config) =>
+          new Promise((_resolve, reject) => {
+            // Never resolves on its own; only reacts to abort, like a stuck native request.
+            config.signal?.addEventListener?.('abort', () => reject(new Error('canceled')));
+          }),
+      );
+      const p = network.get('/auth/me');
+      const assertion = expect(p).rejects.toMatchObject({ kind: 'timeout' });
+      await jest.advanceTimersByTimeAsync(25_000);
+      await assertion;
+      expect(tokenStorage.get()?.token).toBe('tok-1');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('403 BUSINESS_SUSPENDED is announced', async () => {
     await tokenStorage.save('tok-1', inDays(80));
     const onSuspended = jest.fn();

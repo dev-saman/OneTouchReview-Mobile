@@ -1,11 +1,10 @@
 import Constants from 'expo-constants';
 
-type Extra = {
-  googleWebClientId?: string | null;
-  googleIosClientId?: string | null;
-};
+const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, unknown>;
 
-const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
+/** Only a non-empty string counts as configured (Expo may serialize unset values as {}). */
+const configuredString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() ? value.trim() : null;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -31,7 +30,7 @@ export const Config = {
 
   /** Not configured until the owner creates the OAuth clients. Null → Google button hidden. */
   google: {
-    webClientId: extra.googleWebClientId || null,
-    iosClientId: extra.googleIosClientId || null,
+    webClientId: configuredString(extra.googleWebClientId),
+    iosClientId: configuredString(extra.googleIosClientId),
   },
 } as const;

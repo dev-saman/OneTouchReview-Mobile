@@ -136,7 +136,17 @@ export function isRefreshDue(expiresAt: string | null | undefined, now = Date.no
 }
 
 async function performRefresh(): Promise<void> {
-  const response = await client.post(Paths.refresh, undefined, { _isRefresh: true });
+  // Every authenticated request waits on this, so it must never hang (see HARD_TIMEOUT_GRACE_MS).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Config.requestTimeoutMs + 2_000);
+  let response;
+  try {
+    response = await client.post(Paths.refresh, undefined, { _isRefresh: true, signal: controller.signal });
+  } catch (error) {
+    throw controller.signal.aborted ? makeError('timeout') : error;
+  } finally {
+    clearTimeout(timer);
+  }
   const body = response.data as { token?: unknown; token_expires_at?: unknown } | undefined;
   // Field names follow the documented sign-in answer; verified against a live
   // capture before this ships (docs/API-GAPS.md). A different shape is reported, not worked around.
@@ -251,23 +261,47 @@ client.interceptors.response.use(
 // Public interface
 // ---------------------------------------------------------------------------
 
+/**
+ * Hard deadline enforced in JS. Android's native timeout does not cover a stalled DNS
+ * lookup, so without this a request on a broken network can hang forever (seen on an
+ * emulator with dead DNS: neither axios nor a raw XHR timeout ever fired).
+ */
+const HARD_TIMEOUT_GRACE_MS = 2_000;
+
 async function send<T>(
   method: Method,
   url: string,
   data: unknown,
   options: RequestOptions & { onUploadProgress?: (event: AxiosProgressEvent) => void } = {},
 ): Promise<T> {
+  const timeout = options.timeout ?? Config.requestTimeoutMs;
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeout + HARD_TIMEOUT_GRACE_MS);
+  const forwardAbort = () => controller.abort();
+  options.signal?.addEventListener('abort', forwardAbort);
+  if (options.signal?.aborted) controller.abort();
+
   try {
     const response = await client.request<T>({
       method,
       url,
       data,
       ...options,
+      timeout,
+      signal: controller.signal,
       params: cleanParams(options.params),
     });
     return response.data;
   } catch (error) {
+    if (timedOut) throw makeError('timeout');
     throw normalizeError(error);
+  } finally {
+    clearTimeout(timer);
+    options.signal?.removeEventListener('abort', forwardAbort);
   }
 }
 

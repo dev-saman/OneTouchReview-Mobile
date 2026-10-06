@@ -89,9 +89,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     typedRoutes: true,
     reactCompiler: true,
   },
+  // Keys are omitted when unset: Expo serializes null extras as {} (truthy).
   extra: {
-    googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID ?? null,
-    googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID ?? null,
+    ...(process.env.GOOGLE_WEB_CLIENT_ID ? { googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID } : {}),
+    ...(process.env.GOOGLE_IOS_CLIENT_ID ? { googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID } : {}),
     ...(process.env.EAS_PROJECT_ID ? { eas: { projectId: process.env.EAS_PROJECT_ID } } : {}),
   },
 });
