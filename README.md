@@ -1,56 +1,95 @@
-# Welcome to your Expo app 👋
+# OneTouchReview (mobile)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native + Expo SDK 57 (TypeScript, Expo Router, Redux Toolkit) app for OneTouchReview business owners and staff.
+Project rules: [CLAUDE.md](CLAUDE.md). Open API questions: [docs/API-GAPS.md](docs/API-GAPS.md).
 
-## Get started
+- Expo SDK 57 · React Native 0.86.3 · React 19.2.3 · TypeScript ~6.0
+- npm only · Expo Development Build (never Expo Go) · Continuous Native Generation (`android/`, `ios/` are generated, gitignored)
+- App ID: `com.onetouchreview.app`
 
-1. Install dependencies
+## One-time setup
 
-   ```bash
-   npm install
-   ```
+1. Node 22, JDK 17, Android Studio + SDK (`ANDROID_HOME` set), `adb` on PATH.
+2. Put the Firebase files in the project root (gitignored, never committed, contents unchanged):
+   - `google-services.json` (Android)
+   - `GoogleService-Info.plist` (iOS)
+3. `npm install`
 
-2. Start the app
+## Daily commands (from `D:\React Native\OneTouchReview`)
 
-   ```bash
-   npx expo start
-   ```
+| What | Command |
+|------|---------|
+| Install dependencies | `npm install` |
+| Start Metro for the dev build | `npm start` (= `npx expo start --dev-client`) |
+| Start with a clean Metro cache | `npx expo start --dev-client --clear` |
+| Build + install the Android dev build on a USB phone/emulator | `npx expo run:android --device` |
+| Typecheck | `npm run typecheck` |
+| Lint | `npm run lint` |
+| Tests | `npm test` |
+| All three | `npm run verify` |
+| Project health | `npm run doctor` |
+| Add a native/Expo package | `npx expo install <package>` |
+| Fix package versions for SDK 57 | `npx expo install --fix` |
 
-In the output, you'll find options to open the app in a
+`npx expo run:android` runs prebuild automatically when needed. Don't run `npx expo prebuild` by hand unless debugging native output (`--clean` regenerates `android/` from `app.config.ts`).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## iPhone development build (from Windows, via EAS)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Windows can't run Xcode or the iOS Simulator. iOS native builds run on EAS; the iPhone then loads JavaScript from Metro on this PC.
 
-## Get a fresh project
+One time (you sign in to Expo and Apple yourself):
+```
+npx eas-cli login
+npx eas-cli init                       # creates the EAS project; put the projectId in EAS_PROJECT_ID or app.config.ts
+npx eas-cli device:create              # register the iPhone (open the link on the phone)
+npx eas-cli env:create --environment development --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --visibility secret
+npx eas-cli env:create --environment development --name GOOGLE_SERVICE_INFO_PLIST --type file --value ./GoogleService-Info.plist --visibility secret
+```
+(Repeat the two `env:create` commands for `preview` and `production`.)
 
-When you're ready, run:
+Build and install:
+```
+npx eas-cli build --profile development --platform ios
+```
+Install from the link/QR EAS prints, then `npm start` on this PC and open the project from the dev client (same Wi‑Fi, or `npx expo start --dev-client --tunnel`).
 
-```bash
-npm run reset-project
+Rebuild only when native code changes (new native package, `app.config.ts` plugin/permission changes). JS changes need no rebuild.
+
+## Later: release builds
+```
+npx eas-cli build --profile production --platform all
+npx eas-cli submit --platform ios       # TestFlight
+npx eas-cli submit --platform android   # Play internal testing
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Optional configuration (environment variables)
 
-### Other setup steps
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_WEB_CLIENT_ID`, `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_IOS_URL_SCHEME` | Google Sign-In. Unset → the Google button is hidden. Never guess these. |
+| `GOOGLE_SERVICES_JSON`, `GOOGLE_SERVICE_INFO_PLIST` | Firebase file paths (EAS file env vars). Default: project root. |
+| `EAS_PROJECT_ID` | EAS project id. |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Capturing real API responses (test business only)
 
-## Learn more
+The Sheet doesn't document some response bodies. Capture them from **OneTouchReview Mobile Test** with the owner and staff logins:
+```
+node scripts/capture-responses.mjs owner
+node scripts/capture-responses.mjs staff
+```
+Read-only (GETs, plus sign-in / one refresh / sign-out). Passwords are typed at a hidden prompt and never saved; tokens are redacted.
+Output goes to `.api-captures/` (gitignored).
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Structure
+```
+src/
+  app/            Expo Router routes: (auth), (app)/(tabs), blocking screens (update-required, startup-error, suspended)
+  api/            network.ts (only axios importer), errors.ts, paths.ts, types.ts, *.api.ts
+  features/       Redux slices + thunks by feature (session, auth, appConfig, location, network)
+  services/       storage (tokenStorage = SecureStore, prefsStorage = AsyncStorage), device, network, auth, session
+  components/ui/  Shared UI (Screen, Button, TextField, CodeInput, states, OfflineBanner)
+  config/         env.ts, permissions.ts (roles)
+  hooks/, utils/, constants/
+tests/            Jest setup and HTTP mock
+scripts/          capture-responses.mjs
+```
