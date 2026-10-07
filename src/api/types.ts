@@ -368,6 +368,68 @@ export type CardChanges = Partial<
 >;
 
 // ---------------------------------------------------------------------------
+// 12 Reports and Ask AI — /analytics/insights, /review-points, /settings/owner-report/preview, /ai/*
+// ---------------------------------------------------------------------------
+
+export type Sentiment = { positive: number; neutral: number; negative: number; mixed: number };
+
+export type Insights = {
+  period: { from: string; to: string };
+  ai_available: boolean;
+  /** reviews: in the period; tagged: analysed by AI; pending: not yet. */
+  coverage: { reviews: number; tagged: number; pending: number };
+  sentiment: Sentiment;
+  previous_sentiment: Sentiment;
+};
+
+export type ReviewPointStat = {
+  id: number;
+  name: string;
+  kind: string;
+  mentions: number;
+  before: number;
+  change_percent: number | null;
+  /** "new" in the example. */
+  trend: string | null;
+  hidden: boolean;
+  locations: { location_id: number; location_name: string; mentions: number }[];
+  last_mentioned_at: string | null;
+};
+
+export type ReviewPoints = {
+  period: string;
+  ai_available: boolean;
+  coverage: { items: number; tagged: number; pending: number };
+  likes: ReviewPointStat[];
+  dislikes: ReviewPointStat[];
+};
+
+export type ReportFrequency = 'weekly' | 'monthly';
+
+export type OwnerReport = {
+  ai_summary: string | null;
+  frequency: ReportFrequency;
+  period: { from: string; to: string };
+  reviews: { new_count: number; new_average: number | null; rating_now: number | null; rating_before: number | null; total_count: number };
+  requests: { sent: number; clicked: number; click_rate: number; previous_sent: number; previous_click_rate: number };
+  private_feedback: { count: number; low_count: number };
+  awaiting_reply: { count: number };
+  points: {
+    getting_worse: { id: number; name: string; mentions: number }[];
+    getting_better: { id: number; name: string; mentions: number }[];
+    still_strong: { id: number; name: string; mentions: number }[];
+  };
+  quiet: boolean;
+};
+
+export type AiAnswer = {
+  answer: string;
+  /** Shape not documented (empty in the example): only text follow-ups are shown. */
+  follow_ups: unknown[];
+  asks_left_today: number;
+};
+
+// ---------------------------------------------------------------------------
 // 13 Notifications (bell) — GET /notifications, /notifications/unread-count, POST …/read, read-all
 // ---------------------------------------------------------------------------
 

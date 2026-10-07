@@ -66,6 +66,9 @@ function NotificationsList({ location }: { location: LocationSelection }) {
       case 'reviewsList':
         router.push('/reviews');
         return;
+      case 'reports':
+        router.push({ pathname: '/reports', params: target.pointId ? { point: String(target.pointId) } : {} });
+        return;
       case 'clientsNotSent':
         router.navigate({ pathname: '/clients', params: { filter: 'not_sent' } });
         return;

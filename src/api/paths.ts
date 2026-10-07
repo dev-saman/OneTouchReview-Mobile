@@ -63,6 +63,14 @@ export const Paths = {
   digitalCard: (id: number) => `/digital-cards/${id}`,
   digitalCardPhoto: (id: number) => `/digital-cards/${id}/photo`,
 
+  // 12 Reports
+  insights: '/analytics/insights',
+  reviewPoints: '/review-points',
+  ownerReportPreview: '/settings/owner-report/preview',
+  aiStatus: '/ai/status',
+  aiAsk: '/ai/ask',
+  aiAskSuggestions: '/ai/ask/suggestions',
+
   // 13 Notifications (bell)
   notifications: '/notifications',
   notificationsUnreadCount: '/notifications/unread-count',

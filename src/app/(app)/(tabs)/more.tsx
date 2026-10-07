@@ -1,13 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import type { ComponentProps } from 'react';
+import { useCallback, type ComponentProps } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { aiApi } from '@/api/reports.api';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
-import { ROLE_LABELS } from '@/config/permissions';
+import { can, ROLE_LABELS } from '@/config/permissions';
 import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
 import { signOut } from '@/features/session/sessionThunks';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import { appVersion } from '@/services/device/deviceInfo';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
@@ -17,6 +19,15 @@ export default function MoreScreen() {
   const user = useAppSelector((s) => s.auth.user);
   const role = user?.role ?? null;
   const needsAttention = !!user && (!user.email_verified || user.show_password_reminder);
+
+  // Ask AI: owners and managers, and hidden when /ai/status says it's unavailable.
+  const mayAskAi = can(role, 'askAi');
+  const aiFetcher = useCallback(
+    async (signal: AbortSignal) => (mayAskAi ? (await aiApi.status(signal)).available : false),
+    [mayAskAi],
+  );
+  const ai = useApiQuery(mayAskAi ? 'ai-status' : 'ai-off', aiFetcher);
+  const showAskAi = mayAskAi && ai.data === true;
 
   const confirmSignOut = () =>
     Alert.alert('Sign out?', 'You will need to sign in again on this phone.', [
@@ -44,6 +55,8 @@ export default function MoreScreen() {
         <MenuRow icon="qr-code-outline" label="My card" onPress={() => router.push('/card')} />
         <MenuRow icon="chatbox-ellipses-outline" label="Private feedback" onPress={() => router.push('/feedback')} />
         <MenuRow icon="star-outline" label="Google reviews" onPress={() => router.push('/reviews')} />
+        <MenuRow icon="bar-chart-outline" label="Reports" onPress={() => router.push('/reports')} />
+        {showAskAi ? <MenuRow icon="sparkles-outline" label="Ask AI" onPress={() => router.push('/ask-ai')} /> : null}
       </View>
       <Button title="Sign out" variant="secondary" onPress={confirmSignOut} />
       <Text style={[font.caption, styles.version]}>Version {appVersion()}</Text>

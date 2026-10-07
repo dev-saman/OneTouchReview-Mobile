@@ -10,6 +10,8 @@ export type NotificationTarget =
   | { type: 'review'; id: number }
   | { type: 'reviewsAiDrafts' }
   | { type: 'reviewsList' }
+  /** Reports, highlighting the point from url /insights/points/{id} (build guide). */
+  | { type: 'reports'; pointId: number | null }
   | { type: 'clientsNotSent' }
   /** Google connection, integration, texting registration: fixed on the web. */
   | { type: 'webOnly' }
@@ -22,7 +24,13 @@ export type NotificationTarget =
 
 const WEB_ONLY = new Set(['google_connection', 'integration', 'sms_registration']);
 
-export function notificationTarget(n: Pick<AppNotification, 'kind' | 'subject'>): NotificationTarget {
+/** The build guide: "the point id is the number in url /insights/points/{id}". */
+export function pointIdFromUrl(url: string | null | undefined): number | null {
+  const match = url?.match(/\/insights\/points\/(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+export function notificationTarget(n: Pick<AppNotification, 'kind' | 'subject'> & { url?: string | null }): NotificationTarget {
   const subjectId = typeof n.subject?.id === 'number' ? n.subject.id : null;
   switch (n.kind) {
     case 'private_feedback':
@@ -39,7 +47,7 @@ export function notificationTarget(n: Pick<AppNotification, 'kind' | 'subject'>)
     case 'texts_low':
       return { type: 'messageOnly' };
     case 'review_point_alert':
-      return { type: 'notInAppYet', feature: 'Reports' };
+      return { type: 'reports', pointId: pointIdFromUrl(n.url) };
     default:
       return WEB_ONLY.has(n.kind) ? { type: 'webOnly' } : { type: 'unknown' };
   }

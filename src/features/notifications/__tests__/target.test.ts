@@ -36,10 +36,13 @@ describe('notificationTarget', () => {
     expect(notificationTarget({ kind: 'ai_drafts', subject: null })).toEqual({ type: 'reviewsAiDrafts' });
   });
 
-  it('review_point_alert waits for Reports', () => {
-    expect(notificationTarget({ kind: 'review_point_alert', subject: { type: 'review_point_alert', id: 3 } })).toEqual({
-      type: 'notInAppYet',
-      feature: 'Reports',
+  it('review_point_alert opens Reports at the point from the url', () => {
+    expect(
+      notificationTarget({ kind: 'review_point_alert', subject: { type: 'review_point_alert', id: 3 }, url: '/insights/points/42' }),
+    ).toEqual({ type: 'reports', pointId: 42 });
+    expect(notificationTarget({ kind: 'review_point_alert', subject: null, url: '/insights' })).toEqual({
+      type: 'reports',
+      pointId: null,
     });
   });
 
