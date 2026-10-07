@@ -282,6 +282,48 @@ export type ReplyCoach = {
 };
 
 // ---------------------------------------------------------------------------
+// 6 Chats — GET /chats, /chats/{id}, POST …/messages, …/read, PATCH /chats/{id}, GET /chat-team, /chat-settings
+// ---------------------------------------------------------------------------
+
+export type ChatMessage = {
+  id: number;
+  /** visitor or business in the examples. */
+  from: string;
+  body: string | null;
+  sender_name: string | null;
+  created_at: string;
+  read_at: string | null;
+  delivery: { status: string; error_code: string | null } | null;
+  media_count: number;
+  hold_reason: unknown;
+};
+
+/** open / done (list filter values). */
+export type ChatStatus = 'open' | 'done';
+
+export type Chat = {
+  id: number;
+  channel: string;
+  customer: { id: number; name: string } | null;
+  can_reply: boolean;
+  /** Why replying isn't possible; null in every example (shown only when it is text). */
+  reply_block: unknown;
+  reply_window_ends_at: string | null;
+  location: LocationRef | null;
+  visitor: { name: string | null; phone: string | null; email: string | null } | null;
+  status: ChatStatus | string;
+  /** null in every example; shape when assigned is not documented (docs/API-GAPS.md #23). */
+  assigned_to: unknown;
+  blocked: boolean;
+  unread: number;
+  last_message: ChatMessage | null;
+  created_at: string;
+  last_activity_at: string | null;
+};
+
+export type ChatsPage = { chats: Chat[]; next_cursor: string | null; unread_total: number };
+
+// ---------------------------------------------------------------------------
 // 13 Notifications (bell) — GET /notifications, /notifications/unread-count, POST …/read, read-all
 // ---------------------------------------------------------------------------
 

@@ -49,11 +49,11 @@ function ReviewsList({ location }: { location: LocationSelection }) {
   const search = useDebouncedValue(query.trim(), 350);
 
   const load = useCallback(
-    async (page: number, signal?: AbortSignal) => {
+    async (page: number | null, signal?: AbortSignal) => {
       const answer = await reviewsApi.list(
         {
           location,
-          page,
+          page: page ?? 1,
           search,
           status: filter === 'ai' ? AI_DRAFT_STATUS : undefined,
           rating: filter !== 'all' && filter !== 'ai' ? Number(filter) : undefined,
@@ -69,7 +69,7 @@ function ReviewsList({ location }: { location: LocationSelection }) {
       };
       return {
         items: answer.reviews,
-        nextPage: answer.current_page < answer.last_page ? answer.current_page + 1 : null,
+        next: answer.current_page < answer.last_page ? answer.current_page + 1 : null,
         meta: summary,
       };
     },

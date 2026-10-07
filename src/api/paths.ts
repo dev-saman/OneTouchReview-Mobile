@@ -50,6 +50,13 @@ export const Paths = {
   privateFeedbackItem: (id: number) => `/private-feedback/${id}`,
   reviewResponseAiReply: (id: number) => `/review-responses/${id}/ai-reply`,
 
+  // 6 Chats
+  chats: '/chats',
+  chat: (id: number) => `/chats/${id}`,
+  chatMessages: (id: number) => `/chats/${id}/messages`,
+  chatRead: (id: number) => `/chats/${id}/read`,
+  chatSettings: '/chat-settings',
+
   // 13 Notifications (bell)
   notifications: '/notifications',
   notificationsUnreadCount: '/notifications/unread-count',

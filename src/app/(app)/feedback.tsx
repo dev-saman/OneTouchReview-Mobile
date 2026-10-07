@@ -40,9 +40,9 @@ function FeedbackList({ location }: { location: LocationSelection }) {
   const [filter, setFilter] = useState<FeedbackFilter>(params.filter === 'urgent' ? 'urgent' : 'all');
 
   const load = useCallback(
-    async (page: number, signal?: AbortSignal) => {
-      const answer = await feedbackApi.list(location, filter, page, signal);
-      return { items: answer.feedback, nextPage: answer.has_more ? answer.page + 1 : null, meta: null };
+    async (page: number | null, signal?: AbortSignal) => {
+      const answer = await feedbackApi.list(location, filter, page ?? 1, signal);
+      return { items: answer.feedback, next: answer.has_more ? answer.page + 1 : null, meta: null };
     },
     [location, filter],
   );
