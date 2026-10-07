@@ -18,8 +18,8 @@ Every screen in the build guide (Version 2) now exists in code: sign-in, Profile
 
 ## Repository
 - GitHub: https://github.com/dev-saman/OneTouchReview-Mobile (**public**), branch `main`, pushed and in sync.
-- Because it's public: **never put real business, client or person names in code, tests, docs or commit messages.** History was rewritten once (2026-10-07) to remove a real business name; an older version of this file (commits before this one) still names another real business in history — rewrite only if the owner asks.
-- Commit `352a7fb`'s message starts with an invisible BOM (written with PowerShell `Set-Content -Encoding utf8`). Cosmetic; left as is. Write commit message files with the editor tool and `git commit -F`, never `-m` with quotes and never `Set-Content`.
+- Because it's public: **never put real business, client or person names in code, tests, docs or commit messages.** History was rewritten and force-pushed twice on 2026-10-07 to remove real business names; no real names remain anywhere in history (checked with `git log --all -S <name>`). The second rewrite changed every commit ID from "Update handoff notes with today's progress" onward; the IDs below are the current ones.
+- Commit `825d096`'s message starts with an invisible BOM (written with PowerShell `Set-Content -Encoding utf8`). Cosmetic; left as is. Write commit message files with the editor tool and `git commit -F`, never `-m` with quotes and never `Set-Content`.
 
 ## Architecture guards (ESLint `no-restricted-imports`)
 One module owns each sensitive dependency:
@@ -37,17 +37,17 @@ Shared building blocks: `useApiQuery(key, fetcher)` (keyed loads, stale requests
 | `fcfea65` | `/locations` mapped from the Sheet response example |
 | `0cbbe4e` | Dashboard, Clients list, client detail |
 | `2bc4a65` | Resend (owners/managers, `client_id` reused on retry) |
-| `d0ed509` | Expo SDK 57 patch updates (`npx expo install --fix`) |
-| `b338300` | Profile: confirm email, set/change/remove password, reminder, change email |
-| `a4b905d` | Send a review request: existing client or add-and-send, consent tick rules (tested), refusals in plain words |
-| `1b3e163` | Notifications bell + app icon badge (count in a React context, not Redux) |
-| `570c4c8` | Private feedback, Google reviews (AI draft, reply coach, post/edit/delete); **fixed the Profile link** |
-| `48c4064` | Chats inbox + chat screen (`client_id` outbox, mark done/reopen) |
-| `6de77b1` | My card: QR from `short_url`, share, write NFC tag |
-| `352a7fb` | Edit card (changed fields only; photo → JPEG ≤ 1200 px, upload) |
-| `7734b34` | Reports (likes/dislikes, insights, weekly report) and Ask AI |
-| `ec5c57e` | Signed-in devices |
-| `2e99930` | Push (Android) + Notification settings |
+| `c10cba5` | Expo SDK 57 patch updates (`npx expo install --fix`) |
+| `bdeb5b7` | Profile: confirm email, set/change/remove password, reminder, change email |
+| `ef6d951` | Send a review request: existing client or add-and-send, consent tick rules (tested), refusals in plain words |
+| `eea42af` | Notifications bell + app icon badge (count in a React context, not Redux) |
+| `2a88e3c` | Private feedback, Google reviews (AI draft, reply coach, post/edit/delete); **fixed the Profile link** |
+| `5e8361b` | Chats inbox + chat screen (`client_id` outbox, mark done/reopen) |
+| `8aa422f` | My card: QR from `short_url`, share, write NFC tag |
+| `825d096` | Edit card (changed fields only; photo → JPEG ≤ 1200 px, upload) |
+| `f28743d` | Reports (likes/dislikes, insights, weekly report) and Ask AI |
+| `3b11bf9` | Signed-in devices |
+| `b2a5a0f` | Push (Android) + Notification settings |
 
 ## Where the response shapes come from
 - The Sheet's Endpoints tab has a **"Response example"** column (column G) for all 64 endpoints. Types in `src/api/types.ts` keep only fields the screens use.
