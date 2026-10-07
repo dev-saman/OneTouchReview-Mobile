@@ -57,6 +57,9 @@ export const Paths = {
   chatRead: (id: number) => `/chats/${id}/read`,
   chatSettings: '/chat-settings',
 
+  // 8 My card
+  digitalCards: '/digital-cards',
+
   // 13 Notifications (bell)
   notifications: '/notifications',
   notificationsUnreadCount: '/notifications/unread-count',

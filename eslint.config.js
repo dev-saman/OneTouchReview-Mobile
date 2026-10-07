@@ -7,6 +7,7 @@ const expoConfig = require('eslint-config-expo/flat');
  * - axios            → src/api/network.ts only
  * - expo-secure-store → src/services/storage/tokenStorage.ts only
  * - AsyncStorage      → src/services/storage/prefsStorage.ts only
+ * - NFC               → src/services/nfc/nfc.ts only (it always cancels the technology request)
  */
 const restricted = [
   { name: 'axios', message: 'Only src/api/network.ts may import axios. Use the API modules in src/api.' },
@@ -14,6 +15,10 @@ const restricted = [
   {
     name: '@react-native-async-storage/async-storage',
     message: 'Only src/services/storage/prefsStorage.ts may use AsyncStorage (safe preferences only).',
+  },
+  {
+    name: 'react-native-nfc-manager',
+    message: 'Only src/services/nfc/nfc.ts may use NFC (it always cancels the technology request).',
   },
 ];
 
@@ -32,6 +37,7 @@ module.exports = defineConfig([
       'src/api/network.ts',
       'src/services/storage/tokenStorage.ts',
       'src/services/storage/prefsStorage.ts',
+      'src/services/nfc/nfc.ts',
       '**/__tests__/**',
       'tests/**',
     ],

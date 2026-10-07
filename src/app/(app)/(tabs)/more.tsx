@@ -41,6 +41,7 @@ export default function MoreScreen() {
         <Ionicons name="chevron-forward" size={20} color={colors.textSubtle} />
       </Pressable>
       <View style={[styles.card, styles.menu]}>
+        <MenuRow icon="qr-code-outline" label="My card" onPress={() => router.push('/card')} />
         <MenuRow icon="chatbox-ellipses-outline" label="Private feedback" onPress={() => router.push('/feedback')} />
         <MenuRow icon="star-outline" label="Google reviews" onPress={() => router.push('/reviews')} />
       </View>

@@ -324,6 +324,28 @@ export type Chat = {
 export type ChatsPage = { chats: Chat[]; next_cursor: string | null; unread_total: number };
 
 // ---------------------------------------------------------------------------
+// 8 My card — GET /digital-cards ("Cards with url and short_url")
+// ---------------------------------------------------------------------------
+
+export type DigitalCard = {
+  id: number;
+  /** "business" in the example; team members' cards are the other kind. */
+  kind: string;
+  enabled: boolean;
+  /** false until the card is published. */
+  live: boolean;
+  name: string | null;
+  title: string | null;
+  photo_url: string | null;
+  url: string | null;
+  /** Drawn as the QR code and written to NFC tags. */
+  short_url: string | null;
+  staff_member_id: number | null;
+  stats_30d: { views: number; scans: number; taps: number; chats: number; forms: number } | null;
+  can_edit: boolean;
+};
+
+// ---------------------------------------------------------------------------
 // 13 Notifications (bell) — GET /notifications, /notifications/unread-count, POST …/read, read-all
 // ---------------------------------------------------------------------------
 
