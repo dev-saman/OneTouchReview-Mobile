@@ -15,6 +15,7 @@ export default function AppLayout() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="location-picker" options={{ presentation: 'modal', title: 'Choose location' }} />
+      <Stack.Screen name="client/[id]" options={{ title: 'Client' }} />
     </Stack>
   );
 }
