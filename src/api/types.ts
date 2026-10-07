@@ -216,6 +216,34 @@ export type ReviewRequest = {
 export type ReviewRequestsPage = CursorPage & { review_requests: ReviewRequest[] };
 
 // ---------------------------------------------------------------------------
+// 13 Notifications (bell) — GET /notifications, /notifications/unread-count, POST …/read, read-all
+// ---------------------------------------------------------------------------
+
+/** Notifications tab: urgent red, warning amber, info grey. */
+export type NotificationSeverity = 'urgent' | 'warning' | 'info';
+
+export type AppNotification = {
+  id: number;
+  /** private_feedback, google_review, ai_drafts, review_point_alert, google_connection, integration, sms_registration, texts_low, not_sent */
+  kind: string;
+  severity: NotificationSeverity | string;
+  title: string;
+  body: string | null;
+  /** A web app path: never used to navigate (pick the screen from kind and subject). */
+  url: string | null;
+  count: number;
+  /** null for account items. */
+  location: LocationRef | null;
+  /** null for rolled-up kinds. */
+  subject: { type: string; id: number } | null;
+  read_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NotificationsPage = CursorPage & { notifications: AppNotification[]; unread_count: number };
+
+// ---------------------------------------------------------------------------
 // 2 Send request — POST /review-requests, POST /review-requests/with-customer (201)
 // ---------------------------------------------------------------------------
 

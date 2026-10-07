@@ -22,6 +22,22 @@ export function formatDateTime(iso: string | null | undefined): string {
   });
 }
 
+/** "just now", "5 min ago", "3 h ago", "yesterday", "4 days ago", then a date. */
+export function formatRelative(iso: string | null | undefined, now = Date.now()): string {
+  if (!iso) return '';
+  const time = new Date(iso).getTime();
+  if (Number.isNaN(time)) return '';
+  const minutes = Math.floor(Math.max(0, now - time) / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  return formatDate(iso);
+}
+
 /** US numbers as "(512) 555-0123"; anything else is shown as given. */
 export function formatPhone(phone: string | null | undefined): string {
   if (!phone) return '';

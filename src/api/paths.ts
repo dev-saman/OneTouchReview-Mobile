@@ -37,6 +37,12 @@ export const Paths = {
   reviewRequests: '/review-requests',
   reviewRequestsWithCustomer: '/review-requests/with-customer',
   reviewRequestResend: (id: number) => `/review-requests/${id}/resend`,
+
+  // 13 Notifications (bell)
+  notifications: '/notifications',
+  notificationsUnreadCount: '/notifications/unread-count',
+  notificationRead: (id: number) => `/notifications/${id}/read`,
+  notificationsReadAll: '/notifications/read-all',
 } as const;
 
 /** Called without a bearer token. */

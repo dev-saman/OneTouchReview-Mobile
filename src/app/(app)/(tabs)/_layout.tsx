@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
-import type { ColorValue } from 'react-native';
+import { StyleSheet, View, type ColorValue } from 'react-native';
 
-import { colors } from '@/constants/theme';
+import { colors, spacing } from '@/constants/theme';
 import { LocationButton } from '@/features/location/LocationButton';
+import { BellButton } from '@/features/notifications/BellButton';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -14,6 +15,16 @@ function icon(name: IconName) {
   };
 }
 
+/** Location switcher and bell, on every tab's header. */
+function HeaderActions() {
+  return (
+    <View style={styles.headerActions}>
+      <LocationButton />
+      <BellButton />
+    </View>
+  );
+}
+
 export default function TabsLayout() {
   return (
     <Tabs
@@ -21,7 +32,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         headerTitleStyle: { color: colors.text },
-        headerRight: () => <LocationButton />,
+        headerRight: HeaderActions,
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
@@ -29,7 +40,11 @@ export default function TabsLayout() {
       <Tabs.Screen name="clients" options={{ title: 'Clients', tabBarIcon: icon('people-outline') }} />
       <Tabs.Screen name="send" options={{ title: 'Send', tabBarIcon: icon('paper-plane-outline') }} />
       <Tabs.Screen name="chats" options={{ title: 'Chats', tabBarIcon: icon('chatbubbles-outline') }} />
-      <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: icon('menu-outline'), headerRight: undefined }} />
+      <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: icon('menu-outline'), headerRight: () => <BellButton /> }} />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  headerActions: { flexDirection: 'row', alignItems: 'center', marginRight: spacing.xs },
+});

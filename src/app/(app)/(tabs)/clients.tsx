@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { Customer } from '@/api/types';
@@ -27,8 +27,22 @@ export default function ClientsScreen() {
 
 function ClientsList({ location }: { location: LocationSelection }) {
   const router = useRouter();
+  // The bell's "not_sent" item opens this tab with ?filter=not_sent.
+  const { filter } = useLocalSearchParams<{ filter?: string }>();
   const [query, setQuery] = useState('');
-  const [notSent, setNotSent] = useState(false);
+  const [notSent, setNotSent] = useState(filter === 'not_sent');
+  const [appliedFilter, setAppliedFilter] = useState(filter);
+  if (filter !== appliedFilter) {
+    setAppliedFilter(filter);
+    if (filter === 'not_sent') {
+      setNotSent(true);
+      setQuery('');
+    }
+  }
+  // Clear the param once applied, so the same notification can apply it again later.
+  useEffect(() => {
+    if (filter) router.setParams({ filter: undefined });
+  }, [filter, router]);
   const search = useDebouncedValue(query.trim(), 350);
   const list = useClientsList(location, search, notSent);
   useRefreshOnFocus(list.refresh);
