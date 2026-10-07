@@ -214,3 +214,28 @@ export type ReviewRequest = {
 };
 
 export type ReviewRequestsPage = CursorPage & { review_requests: ReviewRequest[] };
+
+// ---------------------------------------------------------------------------
+// 2 Send request — POST /review-requests, POST /review-requests/with-customer (201)
+// ---------------------------------------------------------------------------
+
+export type SendResult = {
+  message: string;
+  review_request: { id: number; status: string; channel: string | null; scheduled_at: string | null };
+  /** When it goes out (quiet hours / send delay); null when sent now. */
+  sends_at: string | null;
+  /** null in every example; shape unknown (docs/API-GAPS.md #18), shown only when it is text. */
+  warning: unknown;
+  /** with-customer only. */
+  customer?: Customer;
+  customer_created?: boolean;
+};
+
+export type NewClientInput = {
+  name: string;
+  phone?: string;
+  email?: string;
+  locationId: number;
+  /** Required true when a phone is given; left out for email-only clients. */
+  consentConfirmed?: boolean;
+};

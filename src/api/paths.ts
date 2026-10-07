@@ -35,6 +35,7 @@ export const Paths = {
   customer: (id: number) => `/customers/${id}`,
   customerSendAttempts: (id: number) => `/customers/${id}/send-attempts`,
   reviewRequests: '/review-requests',
+  reviewRequestsWithCustomer: '/review-requests/with-customer',
   reviewRequestResend: (id: number) => `/review-requests/${id}/resend`,
 } as const;
 

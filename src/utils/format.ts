@@ -8,6 +8,20 @@ export function formatDate(iso: string | null | undefined): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+/** "Oct 14, 2026, 10:00 AM" in the phone's time zone. Empty string for a missing or bad date. */
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 /** US numbers as "(512) 555-0123"; anything else is shown as given. */
 export function formatPhone(phone: string | null | undefined): string {
   if (!phone) return '';
