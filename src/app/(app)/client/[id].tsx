@@ -1,16 +1,20 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { customersApi } from '@/api/customers.api';
+import { isTransient } from '@/api/errors';
 import type { ApiError, Customer, ReviewRequest } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Badge, Card, InfoRow } from '@/components/ui/Card';
 import { ErrorState, LoadingView } from '@/components/ui/States';
+import { can } from '@/config/permissions';
 import { colors, font, spacing } from '@/constants/theme';
 import { RequestRow } from '@/features/clients/RequestRow';
+import { useResend } from '@/features/clients/useResend';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
+import { useAppSelector } from '@/store/hooks';
 import { formatDate, formatPhone, formatRating, humanize, isFuture } from '@/utils/format';
 
 /** Screen 9 detail: contact, consent, "Can be asked again on …", Not sent reasons, request history. */
@@ -36,6 +40,42 @@ export default function ClientDetailScreen() {
   const [more, setMore] = useState<{ items: ReviewRequest[]; cursor: string | null; hasMore: boolean } | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState<ApiError | null>(null);
+
+  const role = useAppSelector((s) => s.auth.user?.role);
+  const mayResend = can(role, 'resend');
+  const { resend, pendingId } = useResend();
+
+  const doResend = async (requestId: number) => {
+    const outcome = await resend(requestId);
+    if (outcome.ok) {
+      Alert.alert('Review link resent', 'The new request shows in this client’s history.');
+      refresh();
+      return;
+    }
+    const { error } = outcome;
+    if (isTransient(error)) {
+      // Same client_id on retry, so this can't send twice.
+      Alert.alert('Couldn’t resend', error.message, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Try again', onPress: () => doResend(requestId) },
+      ]);
+      return;
+    }
+    // Refused (limit reached, too late, not sent yet, no access…): show why and reload so
+    // can_resend hides the button when it no longer applies.
+    Alert.alert('Couldn’t resend', error.message);
+    refresh();
+  };
+
+  const confirmResend = (requestId: number) =>
+    Alert.alert(
+      'Resend the review link?',
+      'Only if the client asked for it. Each request can be resent up to 2 times.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Resend', onPress: () => doResend(requestId) },
+      ],
+    );
 
   const [shownFor, setShownFor] = useState(data);
   if (shownFor !== data) {
@@ -107,7 +147,27 @@ export default function ClientDetailScreen() {
           {history.length === 0 ? (
             <Text style={font.small}>No review requests yet.</Text>
           ) : (
-            history.map((request) => <RequestRow key={request.id} request={request} />)
+            history.map((request) => (
+              <View key={request.id}>
+                <RequestRow request={request} />
+                {request.resends_count > 0 ? (
+                  <Text style={font.caption}>
+                    Resent {request.resends_count} {request.resends_count === 1 ? 'time' : 'times'}
+                  </Text>
+                ) : null}
+                {mayResend && request.can_resend ? (
+                  <Button
+                    title="Resend link"
+                    variant="secondary"
+                    loading={pendingId === request.id}
+                    disabled={pendingId !== null}
+                    onPress={() => confirmResend(request.id)}
+                    accessibilityHint="Sends this review link to the client again"
+                    style={styles.resend}
+                  />
+                ) : null}
+              </View>
+            ))
           )}
           {moreError ? <Text style={font.small}>{moreError.message}</Text> : null}
           {hasMore ? <Button title="Load more" variant="text" loading={loadingMore} onPress={loadMore} /> : null}
@@ -169,4 +229,5 @@ const styles = StyleSheet.create({
   link: { fontSize: 16, color: colors.primary, flexShrink: 1, textAlign: 'right' },
   askAgain: { color: colors.warning, fontWeight: '600' },
   attempt: { gap: 2 },
+  resend: { alignSelf: 'flex-start', marginTop: spacing.xs, marginBottom: spacing.sm },
 });

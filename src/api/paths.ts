@@ -27,6 +27,7 @@ export const Paths = {
   customer: (id: number) => `/customers/${id}`,
   customerSendAttempts: (id: number) => `/customers/${id}/send-attempts`,
   reviewRequests: '/review-requests',
+  reviewRequestResend: (id: number) => `/review-requests/${id}/resend`,
 } as const;
 
 /** Called without a bearer token. */
