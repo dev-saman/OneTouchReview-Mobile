@@ -2,7 +2,7 @@ import { signInDeviceFields } from '@/services/device/deviceInfo';
 
 import { network } from './network';
 import { Paths } from './paths';
-import type { EmailCodeResponse, GoogleSignInResponse, SignInResponse, User, Business } from './types';
+import type { Business, DeviceSession, EmailCodeResponse, GoogleSignInResponse, SignInResponse, User } from './types';
 
 /** Endpoints tab, rows "1 Sign in". */
 export const authApi = {
@@ -29,4 +29,14 @@ export const authApi = {
 
   /** Also removes this device's push registration. */
   logout: () => network.post<unknown>(Paths.logout),
+
+  /** Signed-in devices; current: true marks this phone. */
+  sessions: async (signal?: AbortSignal) =>
+    (await network.get<{ sessions: DeviceSession[] }>(Paths.sessions, { signal })).sessions ?? [],
+
+  /** Sign out one device. 204. */
+  signOutDevice: (id: number) => network.delete<void>(Paths.session(id)),
+
+  /** Sign out all other devices. 204. */
+  signOutOtherDevices: () => network.delete<void>(Paths.sessions),
 };

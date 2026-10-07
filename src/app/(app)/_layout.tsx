@@ -33,6 +33,7 @@ export default function AppLayout() {
         <Stack.Screen name="profile/password" options={{ title: 'Password' }} />
         <Stack.Screen name="profile/remove-password" options={{ title: 'Remove password' }} />
         <Stack.Screen name="profile/change-email" options={{ title: 'Change email' }} />
+        <Stack.Screen name="profile/devices" options={{ title: 'Signed-in devices' }} />
       </Stack>
     </NotificationBadgeProvider>
   );

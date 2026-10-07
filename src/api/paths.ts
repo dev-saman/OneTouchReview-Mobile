@@ -14,6 +14,8 @@ export const Paths = {
   refresh: '/auth/refresh',
   me: '/auth/me',
   logout: '/auth/logout',
+  sessions: '/auth/sessions',
+  session: (id: number) => `/auth/sessions/${id}`,
 
   // 1b Profile
   emailVerifyCode: '/auth/email/verify-code',

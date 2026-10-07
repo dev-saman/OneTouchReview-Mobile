@@ -90,6 +90,16 @@ export type GoogleSignInResponse = SignInResponse & {
   is_new_user?: boolean;
 };
 
+/** GET /auth/sessions item: "current: true marks this phone". */
+export type DeviceSession = {
+  id: number;
+  device_name: string | null;
+  platform: DevicePlatform | string | null;
+  created_at: string;
+  last_used_at: string | null;
+  current: boolean;
+};
+
 /** POST /auth/email-code: always 200 with this shape. */
 export type EmailCodeResponse = {
   message: string;

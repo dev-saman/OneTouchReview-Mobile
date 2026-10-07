@@ -44,6 +44,7 @@ export default function ProfileScreen() {
             <Row icon="trash-outline" label="Remove password" href="/profile/remove-password" />
           ) : null}
           <Row icon="mail-outline" label="Change sign-in email" href="/profile/change-email" />
+          <Row icon="phone-portrait-outline" label="Signed-in devices" href="/profile/devices" />
           {!user.email_verified ? (
             <Row icon="checkmark-circle-outline" label="Confirm your email" href="/profile/confirm-email" />
           ) : null}
