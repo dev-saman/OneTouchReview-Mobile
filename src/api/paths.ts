@@ -38,6 +38,18 @@ export const Paths = {
   reviewRequestsWithCustomer: '/review-requests/with-customer',
   reviewRequestResend: (id: number) => `/review-requests/${id}/resend`,
 
+  // 4 Reviews
+  googleReviews: '/google-reviews',
+  googleReview: (id: number) => `/google-reviews/${id}`,
+  googleReviewAiReply: (id: number) => `/google-reviews/${id}/ai-reply`,
+  googleReviewReply: (id: number) => `/google-reviews/${id}/reply`,
+  googleReviewReplyCoach: (id: number) => `/google-reviews/${id}/reply-coach`,
+
+  // 5 Private feedback
+  privateFeedback: '/private-feedback',
+  privateFeedbackItem: (id: number) => `/private-feedback/${id}`,
+  reviewResponseAiReply: (id: number) => `/review-responses/${id}/ai-reply`,
+
   // 13 Notifications (bell)
   notifications: '/notifications',
   notificationsUnreadCount: '/notifications/unread-count',

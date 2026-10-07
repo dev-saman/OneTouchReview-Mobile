@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { notificationsApi } from '@/api/notifications.api';
+import { AI_DRAFT_STATUS } from '@/api/reviews.api';
 import type { AppNotification } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
@@ -50,6 +51,21 @@ function NotificationsList({ location }: { location: LocationSelection }) {
 
     const target = notificationTarget(n);
     switch (target.type) {
+      case 'feedback':
+        router.push({ pathname: '/feedback/[id]', params: { id: String(target.id), source: target.source } });
+        return;
+      case 'feedbackList':
+        router.push('/feedback');
+        return;
+      case 'review':
+        router.push({ pathname: '/reviews/[id]', params: { id: String(target.id) } });
+        return;
+      case 'reviewsAiDrafts':
+        router.push({ pathname: '/reviews', params: { status: AI_DRAFT_STATUS } });
+        return;
+      case 'reviewsList':
+        router.push('/reviews');
+        return;
       case 'clientsNotSent':
         router.navigate({ pathname: '/clients', params: { filter: 'not_sent' } });
         return;

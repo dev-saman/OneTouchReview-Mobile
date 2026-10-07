@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import type { ComponentProps } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { ROLE_LABELS } from '@/config/permissions';
-import { colors, font, radius, spacing } from '@/constants/theme';
+import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
 import { signOut } from '@/features/session/sessionThunks';
 import { appVersion } from '@/services/device/deviceInfo';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -26,7 +27,7 @@ export default function MoreScreen() {
   return (
     <Screen>
       <Pressable
-        onPress={() => router.push('/profile/index')}
+        onPress={() => router.push('/profile')}
         accessibilityRole="button"
         accessibilityHint="Opens your profile and sign-in options"
         style={({ pressed }) => [styles.card, styles.profile, pressed && styles.pressed]}
@@ -39,13 +40,39 @@ export default function MoreScreen() {
         {needsAttention ? <View style={styles.dot} accessibilityLabel="Needs attention" /> : null}
         <Ionicons name="chevron-forward" size={20} color={colors.textSubtle} />
       </Pressable>
+      <View style={[styles.card, styles.menu]}>
+        <MenuRow icon="chatbox-ellipses-outline" label="Private feedback" onPress={() => router.push('/feedback')} />
+        <MenuRow icon="star-outline" label="Google reviews" onPress={() => router.push('/reviews')} />
+      </View>
       <Button title="Sign out" variant="secondary" onPress={confirmSignOut} />
       <Text style={[font.caption, styles.version]}>Version {appVersion()}</Text>
     </Screen>
   );
 }
 
+type IconName = ComponentProps<typeof Ionicons>['name'];
+
+function MenuRow({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}>
+      <Ionicons name={icon} size={22} color={colors.primary} />
+      <Text style={[font.body, styles.menuLabel]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={18} color={colors.textSubtle} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  menu: { paddingVertical: 0, gap: 0 },
+  menuRow: {
+    minHeight: touchTarget + 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  menuLabel: { flex: 1 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

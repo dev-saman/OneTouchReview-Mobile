@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { dashboardApi } from '@/api/dashboard.api';
 import { Card, InfoRow } from '@/components/ui/Card';
@@ -56,12 +56,18 @@ function Dashboard({ location }: { location: LocationSelection }) {
       <ProfileBanners />
 
       {urgent > 0 ? (
-        <View style={styles.urgent} accessibilityRole="alert">
+        <Pressable
+          onPress={() => router.push({ pathname: '/feedback', params: { filter: 'urgent' } })}
+          accessibilityRole="button"
+          accessibilityHint="Opens urgent private feedback"
+          style={({ pressed }) => [styles.urgent, pressed && styles.pressed]}
+        >
           <Ionicons name="alert-circle" size={20} color={colors.danger} />
           <Text style={styles.urgentText}>
             {urgent} urgent private feedback in the last 7 days
           </Text>
-        </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.danger} />
+        </Pressable>
       ) : null}
 
       <View style={styles.grid}>
@@ -147,6 +153,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   urgentText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.danger },
+  pressed: { opacity: 0.7 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   stat: {
     flexGrow: 1,

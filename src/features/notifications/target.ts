@@ -5,6 +5,11 @@ import type { AppNotification } from '@/api/types';
  * Sheet Notifications tab, "The app opens".
  */
 export type NotificationTarget =
+  | { type: 'feedback'; id: number; source: 'request' | 'card' }
+  | { type: 'feedbackList' }
+  | { type: 'review'; id: number }
+  | { type: 'reviewsAiDrafts' }
+  | { type: 'reviewsList' }
   | { type: 'clientsNotSent' }
   /** Google connection, integration, texting registration: fixed on the web. */
   | { type: 'webOnly' }
@@ -17,17 +22,22 @@ export type NotificationTarget =
 
 const WEB_ONLY = new Set(['google_connection', 'integration', 'sms_registration']);
 
-export function notificationTarget(n: Pick<AppNotification, 'kind'>): NotificationTarget {
+export function notificationTarget(n: Pick<AppNotification, 'kind' | 'subject'>): NotificationTarget {
+  const subjectId = typeof n.subject?.id === 'number' ? n.subject.id : null;
   switch (n.kind) {
+    case 'private_feedback':
+      // add source=card when subject.type is review_card_feedback
+      return subjectId !== null
+        ? { type: 'feedback', id: subjectId, source: n.subject?.type === 'review_card_feedback' ? 'card' : 'request' }
+        : { type: 'feedbackList' };
+    case 'google_review':
+      return subjectId !== null ? { type: 'review', id: subjectId } : { type: 'reviewsList' };
+    case 'ai_drafts':
+      return { type: 'reviewsAiDrafts' };
     case 'not_sent':
       return { type: 'clientsNotSent' };
     case 'texts_low':
       return { type: 'messageOnly' };
-    case 'private_feedback':
-      return { type: 'notInAppYet', feature: 'Private feedback' };
-    case 'google_review':
-    case 'ai_drafts':
-      return { type: 'notInAppYet', feature: 'Reviews' };
     case 'review_point_alert':
       return { type: 'notInAppYet', feature: 'Reports' };
     default:

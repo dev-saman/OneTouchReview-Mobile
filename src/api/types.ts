@@ -216,6 +216,72 @@ export type ReviewRequest = {
 export type ReviewRequestsPage = CursorPage & { review_requests: ReviewRequest[] };
 
 // ---------------------------------------------------------------------------
+// 5 Private feedback — GET /private-feedback, /private-feedback/{id}, POST /review-responses/{id}/ai-reply
+// ---------------------------------------------------------------------------
+
+export type FeedbackSource = 'request' | 'card';
+
+export type PrivateFeedback = {
+  id: number;
+  source: FeedbackSource | string;
+  rating: number | null;
+  text: string | null;
+  points: { id: number; name: string; kind: string }[] | null;
+  client: { customer_id: number | null; name: string | null; phone: string | null; email: string | null } | null;
+  review_request_id: number | null;
+  location: LocationRef | null;
+  created_at: string;
+};
+
+/** Page-based: "page" plus has_more. */
+export type FeedbackPage = { feedback: PrivateFeedback[]; page: number; has_more: boolean };
+
+// ---------------------------------------------------------------------------
+// 4 Reviews — GET /google-reviews, /google-reviews/{id}, POST …/ai-reply, …/reply, …/reply-coach
+// ---------------------------------------------------------------------------
+
+export type ReviewPoint = { id: number; name: string; kind: string };
+
+export type GoogleReview = {
+  id: number;
+  reviewer_name: string | null;
+  reviewer_photo_url: string | null;
+  rating: number | null;
+  comment: string | null;
+  review_time: string | null;
+  reply_comment: string | null;
+  reply_time: string | null;
+  /** A waiting AI draft when present (null in every example). */
+  ai_reply: unknown;
+  points?: ReviewPoint[] | null;
+  location?: LocationRef | null;
+};
+
+export type ReviewsPage = {
+  reviews: GoogleReview[];
+  current_page: number;
+  last_page: number;
+  total: number;
+  filtered_total: number;
+  need_reply_count: number;
+  negative_count: number;
+  ai_drafts: number;
+  avg_rating: number | null;
+};
+
+export type ReplyResult = {
+  message: string;
+  posted_to_google: boolean;
+  google_error: unknown;
+  review: Partial<GoogleReview> & { id: number };
+};
+
+export type ReplyCoach = {
+  tips: { id: string; kind: string; message: string; suggestion: string | null }[];
+  improved_text: string | null;
+};
+
+// ---------------------------------------------------------------------------
 // 13 Notifications (bell) — GET /notifications, /notifications/unread-count, POST …/read, read-all
 // ---------------------------------------------------------------------------
 
