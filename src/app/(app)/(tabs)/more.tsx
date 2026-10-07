@@ -57,6 +57,11 @@ export default function MoreScreen() {
         <MenuRow icon="star-outline" label="Google reviews" onPress={() => router.push('/reviews')} />
         <MenuRow icon="bar-chart-outline" label="Reports" onPress={() => router.push('/reports')} />
         {showAskAi ? <MenuRow icon="sparkles-outline" label="Ask AI" onPress={() => router.push('/ask-ai')} /> : null}
+        <MenuRow
+          icon="notifications-outline"
+          label="Notification settings"
+          onPress={() => router.push('/notification-settings')}
+        />
       </View>
       <Button title="Sign out" variant="secondary" onPress={confirmSignOut} />
       <Text style={[font.caption, styles.version]}>Version {appVersion()}</Text>

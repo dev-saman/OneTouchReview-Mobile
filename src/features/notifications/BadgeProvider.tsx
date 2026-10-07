@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
@@ -6,6 +5,7 @@ import { notificationsApi } from '@/api/notifications.api';
 import { selectSelectedLocation } from '@/features/location/selectors';
 import { toApiError } from '@/hooks/useApiQuery';
 import { useAppForeground } from '@/hooks/useAppForeground';
+import { setAppBadge } from '@/services/push/push';
 import { useAppSelector } from '@/store/hooks';
 
 /** Build guide: refresh every 60 s while the app is open. */
@@ -79,9 +79,9 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
 
   // App icon badge = the bell count. Cleared when signed out (this provider unmounts).
   useEffect(() => {
-    Notifications.setBadgeCountAsync(available ? count : 0).catch(() => {});
+    setAppBadge(available ? count : 0);
   }, [count, available]);
-  useEffect(() => () => void Notifications.setBadgeCountAsync(0).catch(() => {}), []);
+  useEffect(() => () => setAppBadge(0), []);
 
   const value = useMemo(
     () => ({ count, available, setCount: setCountState, refresh }),

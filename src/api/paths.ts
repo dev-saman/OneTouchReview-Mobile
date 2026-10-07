@@ -25,6 +25,11 @@ export const Paths = {
   profileEmailCode: '/settings/profile/email-code',
   profileEmail: '/settings/profile/email',
 
+  // 3 Push
+  devices: '/devices',
+  device: (id: number) => `/devices/${id}`,
+  notificationPreferences: '/notification-preferences',
+
   // 10 Locations
   locations: '/locations',
 

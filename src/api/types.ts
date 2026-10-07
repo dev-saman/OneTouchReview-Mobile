@@ -90,6 +90,14 @@ export type GoogleSignInResponse = SignInResponse & {
   is_new_user?: boolean;
 };
 
+/** GET/PUT /notification-preferences: the four documented push settings. */
+export type NotificationPreferences = {
+  chats: boolean;
+  private_feedback: boolean;
+  private_feedback_low_only: boolean;
+  google_reviews: boolean;
+};
+
 /** GET /auth/sessions item: "current: true marks this phone". */
 export type DeviceSession = {
   id: number;

@@ -2,11 +2,13 @@ import { Stack } from 'expo-router';
 
 import { colors } from '@/constants/theme';
 import { NotificationBadgeProvider } from '@/features/notifications/BadgeProvider';
+import { PushManager } from '@/features/push/PushManager';
 
 /** Signed-in area. Only reachable when session.phase === 'signedIn' (root guard). */
 export default function AppLayout() {
   return (
     <NotificationBadgeProvider>
+      <PushManager />
       <Stack
         screenOptions={{
           headerTintColor: colors.primary,
@@ -18,6 +20,7 @@ export default function AppLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="location-picker" options={{ presentation: 'modal', title: 'Choose location' }} />
         <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+        <Stack.Screen name="notification-settings" options={{ title: 'Notification settings' }} />
         <Stack.Screen name="client/[id]" options={{ title: 'Client' }} />
         <Stack.Screen name="chats/[id]" options={{ title: 'Chat' }} />
         <Stack.Screen name="card" options={{ title: 'My card' }} />
