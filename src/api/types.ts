@@ -49,7 +49,8 @@ export type AppConfig = {
   latest_app_version: Record<DevicePlatform, string>;
   /** Currently null on both platforms (open item in docs/API-GAPS.md). */
   store_urls: Record<DevicePlatform, string | null>;
-  reverb: { host: string; port: number; key: string; scheme: string };
+  /** null when realtime is off (Sheet response example). */
+  reverb: { host: string; port: number; key: string; scheme: string } | null;
   firebase_enabled: boolean;
 };
 

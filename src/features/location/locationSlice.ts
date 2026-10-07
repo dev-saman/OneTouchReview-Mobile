@@ -4,10 +4,7 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 
 import { sessionActions } from '../session/sessionSlice';
 
-/**
- * Sheet Notifications tab documents location as { id, name }.
- * The GET /locations item is confirmed against a captured response before use.
- */
+/** GET /locations item (Sheet response example); the app only needs id and name. */
 export type Location = { id: number; name: string };
 
 type LocationState = {

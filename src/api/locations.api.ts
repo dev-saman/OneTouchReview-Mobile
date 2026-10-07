@@ -7,14 +7,17 @@ import { Paths } from './paths';
 /**
  * Maps the GET /locations body to Location[].
  *
- * PENDING CAPTURE: the Sheet does not document the response shape. This is filled in
- * from a real test-business response (scripts/capture-responses.mjs). Until then it
- * fails loudly rather than guessing.
+ * Sheet Endpoints tab, "Response example": { locations: [{ id, name, ... }], limits, places, ... }.
+ * Only id and name are kept; the switcher needs nothing else.
  */
-export function parseLocations(_body: unknown): Location[] {
-  throw makeError('unknown', {
-    message: 'Locations response is not mapped yet (waiting for a captured /locations response).',
-  });
+export function parseLocations(body: unknown): Location[] {
+  const list = (body as { locations?: unknown } | null)?.locations;
+  if (!Array.isArray(list)) {
+    throw makeError('unknown', { message: 'Unexpected locations response.' });
+  }
+  return list
+    .filter((l): l is { id: number; name: string } => typeof l?.id === 'number' && typeof l?.name === 'string')
+    .map(({ id, name }) => ({ id, name }));
 }
 
 export const locationsApi = {
