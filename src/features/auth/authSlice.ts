@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import type { Business, User } from '@/api/types';
+import type { Business, ProfileUser, User } from '@/api/types';
 
 import { sessionActions } from '../session/sessionSlice';
 
@@ -24,6 +24,10 @@ const authSlice = createSlice({
     identityLoaded(state, action: PayloadAction<{ user: User; business: Business }>) {
       state.user = action.payload.user;
       state.business = action.payload.business;
+    },
+    /** A profile change answered with the updated user; role stays as /auth/me gave it. */
+    profileUpdated(state, action: PayloadAction<Partial<ProfileUser>>) {
+      if (state.user) state.user = { ...state.user, ...action.payload };
     },
     googleSignInUnavailable(state) {
       state.googleSignInOff = true;

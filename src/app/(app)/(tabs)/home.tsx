@@ -9,6 +9,7 @@ import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, radius, spacing } from '@/constants/theme';
 import { RequestRow } from '@/features/clients/RequestRow';
 import { selectSelectedLocation } from '@/features/location/selectors';
+import { ProfileBanners } from '@/features/profile/ProfileBanners';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import type { LocationSelection } from '@/services/storage/prefsStorage';
@@ -52,6 +53,8 @@ function Dashboard({ location }: { location: LocationSelection }) {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
     >
+      <ProfileBanners />
+
       {urgent > 0 ? (
         <View style={styles.urgent} accessibilityRole="alert">
           <Ionicons name="alert-circle" size={20} color={colors.danger} />

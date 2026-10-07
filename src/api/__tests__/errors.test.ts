@@ -1,4 +1,4 @@
-import { errorFromResponse, isTransient, makeError, parseRetryAfter } from '../errors';
+import { errorFromResponse, fieldError, isTransient, makeError, parseRetryAfter } from '../errors';
 
 describe('errorFromResponse', () => {
   it('reads { error: { code, message, details } } and keeps the server message', () => {
@@ -79,5 +79,24 @@ describe('isTransient', () => {
     expect(isTransient(makeError('unauthorized'))).toBe(false);
     expect(isTransient(makeError('validation'))).toBe(false);
     expect(isTransient(makeError('server', { status: 503, code: 'GOOGLE_SIGNIN_OFF' }))).toBe(false);
+  });
+});
+
+describe('fieldError', () => {
+  it('reads VALIDATION_FAILED details for the field', () => {
+    const e = errorFromResponse(422, {
+      error: { code: 'VALIDATION_FAILED', message: 'Check the fields.', details: { current_password: ['Wrong password.'] } },
+    });
+    expect(fieldError(e, 'current_password')).toBe('Wrong password.');
+    expect(fieldError(e, 'password')).toBeUndefined();
+  });
+
+  it('shows SAME_EMAIL and EMAIL_TAKEN under the email field', () => {
+    const same = errorFromResponse(422, { error: { code: 'SAME_EMAIL', message: 'That is already your email.' } });
+    const taken = errorFromResponse(422, { error: { code: 'EMAIL_TAKEN', message: 'Another account uses it.' } });
+    expect(fieldError(same, 'email')).toBe('That is already your email.');
+    expect(fieldError(taken, 'email')).toBe('Another account uses it.');
+    expect(fieldError(taken, 'password')).toBeUndefined();
+    expect(fieldError(null, 'email')).toBeUndefined();
   });
 });

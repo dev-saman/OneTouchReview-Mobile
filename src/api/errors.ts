@@ -113,10 +113,14 @@ export function isTransient(error: ApiError): boolean {
   );
 }
 
+/** Errors tab: "Show under the email field". */
+const EMAIL_FIELD_CODES = new Set(['SAME_EMAIL', 'EMAIL_TAKEN']);
+
 /** Error to show for a field (VALIDATION_FAILED and the field-level codes SAME_EMAIL / EMAIL_TAKEN). */
 export function fieldError(error: ApiError | null | undefined, field: string): string | undefined {
   if (!error) return undefined;
   const messages = error.fieldErrors?.[field];
   if (messages?.length) return messages[0];
+  if (error.code && EMAIL_FIELD_CODES.has(error.code) && field === 'email') return error.message;
   return undefined;
 }

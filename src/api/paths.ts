@@ -15,6 +15,14 @@ export const Paths = {
   me: '/auth/me',
   logout: '/auth/logout',
 
+  // 1b Profile
+  emailVerifyCode: '/auth/email/verify-code',
+  emailVerify: '/auth/email/verify',
+  password: '/auth/password',
+  passwordReminderDismiss: '/auth/password-reminder/dismiss',
+  profileEmailCode: '/settings/profile/email-code',
+  profileEmail: '/settings/profile/email',
+
   // 10 Locations
   locations: '/locations',
 

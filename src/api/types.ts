@@ -60,8 +60,10 @@ export type AppConfig = {
 
 export type Role = 'owner' | 'manager' | 'staff';
 
-/** Endpoints tab, GET /auth/me notes. */
+/** Endpoints tab, GET /auth/me notes + response examples. */
 export type User = {
+  name: string;
+  email: string;
   role: Role;
   email_verified: boolean;
   has_password: boolean;
@@ -95,6 +97,12 @@ export type EmailCodeResponse = {
   expires_in: number;
   resend_after: number;
 };
+
+/**
+ * 1b Profile answers (verify email, set/remove password, change email). Same user object as
+ * /auth/me but without role (role is per business), so the app merges it into the stored user.
+ */
+export type ProfileUser = Omit<User, 'role'>;
 
 export type SignInDeviceFields = {
   device_name: string;
