@@ -33,10 +33,13 @@ Read `CLAUDE.md` first (project rules), then `docs/API-GAPS.md` (open contract q
    - Shared: `useApiQuery(key, fetcher)` (keyed loads, cancels stale requests), `useRefreshOnFocus` (focus + foreground), `useDebouncedValue`, `utils/format.ts`, `components/ui/Card.tsx`, `features/clients/RequestRow.tsx`.
 9. `2bc4a65` Resend link (owners/managers, only when `can_resend`): confirm "Only if the client asked for it"; `client_id` UUID reused on retry after offline/timeout/5xx, replaced after success or a refusal; refusals show the server message and reload.
 
+10. `84edee5` Handoff update. `d0ed509` Expo SDK 57 patch updates (`npx expo install --fix`); dev build rebuilt and checked on the emulator (if `expo run:android` fails at the install step, `adb push` the APK to `/data/local/tmp` and `adb shell pm install -r` it).
+
 Checks: lint + typecheck + **84 tests** pass.
 
 ## Where the response shapes come from
 - The owner added a **"Response example (HTTP status + JSON)"** column to the Sheet's Endpoints tab for every endpoint (2026-10-07). Types in `src/api/types.ts` are built from it, keeping only fields the screens use.
+- Source of the examples: real API output from a temporary local test database with made-up data ("Smith Law", Austin) — not production, not the test business; AI/Google faked; four display values hand-edited (none read by the app). So field names are reliable, but behaviour on production still needs checking on the test business. The author couldn't read the "test logins file", so the test logins exist — ask the owner for them.
 - The capture script is no longer required for Milestone 1 (still useful to confirm against the test business). API-GAPS #10 is answered; new open items #14–#17 (last_not_sent fields, non-empty send-attempts example, follow-ups in history, avg_rating 0 vs null).
 
 ## Verified on Android emulator (Medium_Phone_API_36)
@@ -57,7 +60,6 @@ Checks: lint + typecheck + **84 tests** pass.
 - **Emulator networking is flaky.** If the app shows "You're offline" / "That took too long" while the PC is online, restart the emulator with
   `emulator -avd Medium_Phone_API_36 -dns-server 8.8.8.8 -no-snapshot-load`. It happened twice today.
 - Rebuild native only when native deps / `app.config.ts` plugins change: `npx expo run:android` (about 1–2 min incremental).
-- `expo` 57.0.27 and 5 other package updates are available — not applied (do it as a separate change with `npx expo install --fix`).
 
 ## Other notes
 - Baseline check of sibling repos (2026-10-06): only `Medhiwa-23_Advantage` changed (owner's own commit + merge); Stech, thedemostop, Wazigo unchanged.
