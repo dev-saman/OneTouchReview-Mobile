@@ -343,7 +343,29 @@ export type DigitalCard = {
   staff_member_id: number | null;
   stats_30d: { views: number; scans: number; taps: number; chats: number; forms: number } | null;
   can_edit: boolean;
+  bio: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  booking_url: string | null;
+  address: CardAddress | null;
+  has_photo: boolean;
 };
+
+export type CardAddress = {
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+};
+
+/** PATCH /digital-cards/{id}: the documented editable fields only. */
+export type CardChanges = Partial<
+  Pick<DigitalCard, 'name' | 'title' | 'bio' | 'phone' | 'email' | 'website' | 'booking_url' | 'enabled'> & {
+    address: CardAddress;
+  }
+>;
 
 // ---------------------------------------------------------------------------
 // 13 Notifications (bell) — GET /notifications, /notifications/unread-count, POST …/read, read-all

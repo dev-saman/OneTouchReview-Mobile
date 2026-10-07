@@ -59,6 +59,9 @@ export const Paths = {
 
   // 8 My card
   digitalCards: '/digital-cards',
+  // 11 Edit card
+  digitalCard: (id: number) => `/digital-cards/${id}`,
+  digitalCardPhoto: (id: number) => `/digital-cards/${id}/photo`,
 
   // 13 Notifications (bell)
   notifications: '/notifications',

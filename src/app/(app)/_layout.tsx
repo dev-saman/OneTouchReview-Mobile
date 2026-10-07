@@ -21,6 +21,7 @@ export default function AppLayout() {
         <Stack.Screen name="client/[id]" options={{ title: 'Client' }} />
         <Stack.Screen name="chats/[id]" options={{ title: 'Chat' }} />
         <Stack.Screen name="card" options={{ title: 'My card' }} />
+        <Stack.Screen name="card/edit" options={{ title: 'Edit card' }} />
         <Stack.Screen name="feedback" options={{ title: 'Private feedback' }} />
         <Stack.Screen name="feedback/[id]" options={{ title: 'Feedback' }} />
         <Stack.Screen name="reviews" options={{ title: 'Reviews' }} />

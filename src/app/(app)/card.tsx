@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -50,6 +51,7 @@ export default function MyCardScreen() {
 }
 
 function CardView({ card }: { card: DigitalCard }) {
+  const router = useRouter();
   const url = card.short_url!;
   const stats = card.stats_30d;
 
@@ -75,6 +77,13 @@ function CardView({ card }: { card: DigitalCard }) {
 
       <Button title="Share link" onPress={share} />
       <NfcWriter url={url} />
+      {card.can_edit ? (
+        <Button
+          title="Edit card"
+          variant="text"
+          onPress={() => router.push({ pathname: '/card/edit', params: { id: String(card.id) } })}
+        />
+      ) : null}
 
       {stats ? (
         <Card title="Last 30 days">
