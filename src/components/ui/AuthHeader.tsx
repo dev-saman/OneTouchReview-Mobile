@@ -6,13 +6,36 @@ import { colors, font, spacing } from '@/constants/theme';
 import { BrandMark } from './Brand';
 import type { IconName } from './IconTile';
 
-/** Centred top of the sign-in screens: the brand mark (or an icon), a title and a line under it. */
-export function AuthHeader({ title, subtitle, icon }: { title: string; subtitle?: string; icon?: IconName }) {
+const TONES = {
+  brand: { backgroundColor: colors.primarySoft, color: colors.primary },
+  info: { backgroundColor: colors.infoSoft, color: colors.info },
+  danger: { backgroundColor: colors.dangerSurface, color: colors.danger },
+} as const;
+
+/**
+ * Centred top of the sign-in and full-screen state screens: the brand mark (or an icon in a
+ * tinted circle), a title and a line under it.
+ */
+export function AuthHeader({
+  title,
+  subtitle,
+  icon,
+  tone = 'brand',
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: IconName;
+  tone?: keyof typeof TONES;
+}) {
   return (
     <View style={styles.header}>
       {icon ? (
-        <View style={styles.iconCircle} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-          <Ionicons name={icon} size={34} color={colors.primary} />
+        <View
+          style={[styles.iconCircle, { backgroundColor: TONES[tone].backgroundColor }]}
+          importantForAccessibility="no-hide-descendants"
+          accessibilityElementsHidden
+        >
+          <Ionicons name={icon} size={34} color={TONES[tone].color} />
         </View>
       ) : (
         <BrandMark size={84} />

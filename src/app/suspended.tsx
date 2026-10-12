@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { BrandMark } from '@/components/ui/Brand';
+import { AuthHeader } from '@/components/ui/AuthHeader';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
-import { font, spacing } from '@/constants/theme';
 import { runBootstrap, signOut } from '@/features/session/sessionThunks';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
@@ -25,12 +24,12 @@ export default function SuspendedScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} contentStyle={styles.content}>
-      <BrandMark size={64} />
-      <View style={styles.body}>
-        <Text style={font.title}>Account suspended</Text>
-        <Text style={font.body}>{message ?? 'This account is suspended.'}</Text>
-        <Text style={font.small}>Please contact OneTouchReview support.</Text>
-      </View>
+      <AuthHeader
+        icon="shield-outline"
+        tone="danger"
+        title="Account suspended"
+        subtitle={`${message ?? 'This account is suspended.'} Please contact OneTouchReview support.`}
+      />
       <Button title="Try again" variant="secondary" onPress={retry} loading={retrying} />
       <Button title="Sign out" variant="text" onPress={() => dispatch(signOut())} />
     </Screen>
@@ -39,5 +38,4 @@ export default function SuspendedScreen() {
 
 const styles = StyleSheet.create({
   content: { justifyContent: 'center' },
-  body: { gap: spacing.md },
 });

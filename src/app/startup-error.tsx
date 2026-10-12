@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { isTransient } from '@/api/errors';
-import { BrandMark } from '@/components/ui/Brand';
+import { AuthHeader } from '@/components/ui/AuthHeader';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
-import { font, spacing } from '@/constants/theme';
 import { runBootstrap, signOut } from '@/features/session/sessionThunks';
 import { tokenStorage } from '@/services/storage/tokenStorage';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -33,11 +32,12 @@ export default function StartupErrorScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} contentStyle={styles.content}>
-      <BrandMark size={64} />
-      <View style={styles.body}>
-        <Text style={font.title}>{offline ? "You're offline" : "Couldn't start OneTouchReview"}</Text>
-        <Text style={font.body}>{error?.message ?? 'Please try again.'}</Text>
-      </View>
+      <AuthHeader
+        icon={offline ? 'cloud-offline-outline' : 'warning-outline'}
+        tone={offline ? 'info' : 'danger'}
+        title={offline ? "You're offline" : 'Something went wrong'}
+        subtitle={error?.message ?? 'Please try again.'}
+      />
       <Button title="Retry" onPress={retry} loading={retrying} />
       {hasSession && error && !isTransient(error) ? (
         <Button title="Sign out" variant="text" onPress={() => dispatch(signOut())} />
@@ -48,5 +48,4 @@ export default function StartupErrorScreen() {
 
 const styles = StyleSheet.create({
   content: { justifyContent: 'center' },
-  body: { gap: spacing.md },
 });
