@@ -76,6 +76,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'com.onetouchreview.app',
+    // Google Play needs a higher versionCode for every upload. android/ is regenerated (CNG),
+    // so bump it here, never in android/app/build.gradle.
+    versionCode: 1,
+    // Added by the Expo template for development overlays; the app doesn't draw over other apps.
+    blockedPermissions: ['android.permission.SYSTEM_ALERT_WINDOW'],
     googleServicesFile: googleServicesJson,
     adaptiveIcon: {
       backgroundColor: '#FFFFFF',
