@@ -5,8 +5,10 @@ import { Alert, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } fr
 import { customersApi } from '@/api/customers.api';
 import { isTransient } from '@/api/errors';
 import type { ApiError, Customer, ReviewRequest } from '@/api/types';
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Badge, Card, InfoRow } from '@/components/ui/Card';
+import { Stars } from '@/components/ui/Stars';
 import { ErrorState, LoadingView } from '@/components/ui/States';
 import { can } from '@/config/permissions';
 import { colors, font, spacing } from '@/constants/theme';
@@ -118,6 +120,7 @@ export default function ClientDetailScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
       >
+        <ProfileHeader customer={customer} />
         <ContactCard customer={customer} />
 
         {customer.latest_response ? (
@@ -159,6 +162,7 @@ export default function ClientDetailScreen() {
                   <Button
                     title="Resend link"
                     variant="secondary"
+                    icon="paper-plane-outline"
                     loading={pendingId === request.id}
                     disabled={pendingId !== null}
                     onPress={() => confirmResend(request.id)}
@@ -174,6 +178,50 @@ export default function ClientDetailScreen() {
         </Card>
       </ScrollView>
     </>
+  );
+}
+
+/** Avatar, name, when they were added, their latest rating, and Call / Email shortcuts. */
+function ProfileHeader({ customer }: { customer: Customer }) {
+  const rating = customer.latest_response?.rating;
+  return (
+    <Card>
+      <View style={styles.profile}>
+        <Avatar name={customer.name} size={64} />
+        <View style={styles.profileText}>
+          <Text style={font.heading}>{customer.name}</Text>
+          <Text style={font.caption}>Added {formatDate(customer.created_at)}</Text>
+          {rating !== null && rating !== undefined ? (
+            <View style={styles.rating} accessibilityLabel={`Latest rating ${formatRating(rating)} out of 5`}>
+              <Stars rating={rating} />
+              <Text style={font.small}>{formatRating(rating)}</Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+      {customer.phone || customer.email ? (
+        <View style={styles.quick}>
+          {customer.phone ? (
+            <Button
+              title="Call"
+              variant="secondary"
+              icon="call-outline"
+              onPress={() => Linking.openURL(`tel:${customer.phone}`)}
+              style={styles.quickButton}
+            />
+          ) : null}
+          {customer.email ? (
+            <Button
+              title="Email"
+              variant="secondary"
+              icon="mail-outline"
+              onPress={() => Linking.openURL(`mailto:${customer.email}`)}
+              style={styles.quickButton}
+            />
+          ) : null}
+        </View>
+      ) : null}
+    </Card>
   );
 }
 
@@ -224,6 +272,11 @@ function ContactLine({ label, value, onPress }: { label: string; value: string; 
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
+  profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  profileText: { flex: 1, gap: 2 },
+  rating: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  quick: { flexDirection: 'row', gap: spacing.sm },
+  quickButton: { flex: 1 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   contactLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.md },
   link: { fontSize: 16, color: colors.primary, flexShrink: 1, textAlign: 'right' },

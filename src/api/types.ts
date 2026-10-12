@@ -211,6 +211,8 @@ export type Customer = {
   sms_consent: SmsConsent | null;
   email_status: { status: string } | null;
   location: LocationRef | null;
+  /** When the client was added. */
+  created_at: string;
 };
 
 export type CustomersPage = CursorPage & { customers: Customer[] };
