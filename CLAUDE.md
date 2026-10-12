@@ -42,6 +42,16 @@ React Native + Expo (TypeScript) app for OneTouchReview business owners and staf
 - NFC: react-native-nfc-manager, NDEF URI record with `short_url`; always cancel the technology request. No phone-to-phone NFC sharing.
 - Never log tokens, passwords, codes, Google tokens or client content. Never commit secrets, test logins, keystores, `google-services.json` or `GoogleService-Info.plist`.
 
+### Design
+- Owner's mockups are a style guide, not a spec: apply them only where the app has the data and the Sheet has the endpoint. Never invent data, fields or actions for a mockup element (left out so far: charts, trends, list counts, per-star bars, WhatsApp, Apple sign-in, in-app sign-up, Contact support).
+- Colours, radius and shadow come from `src/constants/theme.ts` only (brand teal `#018F7C`, gold `#FBB10A`, navy text `#0B1F3A`). No hard-coded colours in screens.
+- Reuse `src/components/ui/` (Avatar, IconTile, Brand, AuthHeader, Button/TextField `icon`, EmptyState `icon`, Card) before writing new components.
+- Light theme only. The one dark surface is the launch screen; its `LAUNCH_COLORS.top` must match the native splash `backgroundColor` in `app.config.ts`.
+- Owner decisions: no quick actions on Home; Send is the raised centre tab.
+- Brand images live in `assets/images/` (generated from the owner's logo files). Icon / splash / `app.config.ts` changes need `npx expo prebuild --platform android --clean` before rebuilding.
+- Mockups contain real names: never copy them into code, tests, docs or commits.
+- Check visual changes on the emulator (read-only screens only while it is on a real business).
+
 ### Test business only
 "OneTouchReview Mobile Test" (business 99; locations Austin 1497, Dallas 1498). Texts are in log mode.
 NEVER add a postal address (real emails could go out). Only sample clients, 555-01xx phones, example.com emails. Never sign in to a real customer's business.
