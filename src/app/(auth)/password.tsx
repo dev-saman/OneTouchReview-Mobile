@@ -1,15 +1,16 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, View, type TextInput } from 'react-native';
+import { StyleSheet, Text, type TextInput } from 'react-native';
 
 import { authApi } from '@/api/auth.api';
 import { fieldError } from '@/api/errors';
 import { network } from '@/api/network';
 import type { ApiError } from '@/api/types';
+import { AuthHeader, OrDivider } from '@/components/ui/AuthHeader';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
-import { colors, font, spacing } from '@/constants/theme';
+import { colors } from '@/constants/theme';
 import { completeSignIn } from '@/features/session/sessionThunks';
 import { useCountdown } from '@/hooks/useCountdown';
 import { useAppDispatch } from '@/store/hooks';
@@ -50,12 +51,11 @@ export default function PasswordScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text style={font.title}>Sign in with password</Text>
-      </View>
+      <AuthHeader title="Welcome back" subtitle="Sign in with your email and password." />
 
       <TextField
         label="Email"
+        icon="mail-outline"
         value={email}
         onChangeText={setEmail}
         error={emailError}
@@ -70,6 +70,7 @@ export default function PasswordScreen() {
       <TextField
         ref={passwordRef}
         label="Password"
+        icon="lock-closed-outline"
         value={password}
         onChangeText={setPassword}
         error={passwordError}
@@ -95,12 +96,12 @@ export default function PasswordScreen() {
         variant="text"
         onPress={() => router.push({ pathname: '/forgot-password', params: { email: email.trim() } })}
       />
-      <Button title="Email me a code instead" variant="text" onPress={() => router.back()} />
+      <OrDivider />
+      <Button title="Email me a code instead" variant="secondary" icon="mail-outline" onPress={() => router.back()} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing.sm, marginBottom: spacing.md },
   error: { color: colors.danger, fontSize: 14 },
 });

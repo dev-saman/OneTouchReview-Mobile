@@ -1,15 +1,16 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { authApi } from '@/api/auth.api';
 import { fieldError } from '@/api/errors';
 import { network } from '@/api/network';
 import type { ApiError } from '@/api/types';
+import { AuthHeader } from '@/components/ui/AuthHeader';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
-import { colors, font, spacing } from '@/constants/theme';
+import { colors } from '@/constants/theme';
 import { useCountdown } from '@/hooks/useCountdown';
 
 /** POST /auth/forgot-password. The reset link in the email opens the web app. */
@@ -41,11 +42,14 @@ export default function ForgotPasswordScreen() {
   if (sent) {
     return (
       <Screen>
-        <Text style={font.title}>Check your email</Text>
-        <Text style={font.body}>
-          {`If an account uses ${email.trim()}, we've sent a link to reset the password. ` +
-            'The link opens OneTouchReview on the web.'}
-        </Text>
+        <AuthHeader
+          icon="mail-open-outline"
+          title="Check your email"
+          subtitle={
+            `If an account uses ${email.trim()}, we've sent a link to reset the password. ` +
+            'The link opens OneTouchReview on the web.'
+          }
+        />
         <Button title="Back to sign in" onPress={() => router.dismissTo('/sign-in')} />
       </Screen>
     );
@@ -55,12 +59,10 @@ export default function ForgotPasswordScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text style={font.title}>Reset your password</Text>
-        <Text style={font.small}>{"We'll email you a link to set a new password."}</Text>
-      </View>
+      <AuthHeader icon="lock-closed-outline" title="Reset your password" subtitle="We'll email you a link to set a new password." />
       <TextField
         label="Email"
+        icon="mail-outline"
         value={email}
         onChangeText={setEmail}
         error={emailError}
@@ -83,6 +85,5 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing.sm, marginBottom: spacing.md },
   error: { color: colors.danger, fontSize: 14 },
 });

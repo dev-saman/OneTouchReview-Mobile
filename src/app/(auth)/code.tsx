@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { authApi } from '@/api/auth.api';
 import { network } from '@/api/network';
 import type { ApiError } from '@/api/types';
+import { AuthHeader } from '@/components/ui/AuthHeader';
 import { Button } from '@/components/ui/Button';
 import { CODE_LENGTH, CodeInput } from '@/components/ui/CodeInput';
 import { Screen } from '@/components/ui/Screen';
@@ -80,12 +81,11 @@ export default function CodeScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Text style={font.title}>Enter your code</Text>
-        <Text style={font.small}>
-          We emailed a 6-digit code to {params.masked || email}. It works for {minutes} minutes.
-        </Text>
-      </View>
+      <AuthHeader
+        icon="mail-unread-outline"
+        title="Check your email"
+        subtitle={`We emailed a 6-digit code to ${params.masked || email}. It works for ${minutes} minutes.`}
+      />
 
       <CodeInput
         value={code}
@@ -134,7 +134,6 @@ export default function CodeScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing.sm, marginBottom: spacing.md },
   messages: { gap: spacing.xs },
   error: { color: colors.danger, fontSize: 14 },
 });

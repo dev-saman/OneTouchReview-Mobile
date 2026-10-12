@@ -6,11 +6,11 @@ import { authApi } from '@/api/auth.api';
 import { fieldError, makeError } from '@/api/errors';
 import { network } from '@/api/network';
 import type { ApiError } from '@/api/types';
-import { BrandLogo } from '@/components/ui/Brand';
+import { AuthHeader, OrDivider } from '@/components/ui/AuthHeader';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
-import { colors, font, spacing } from '@/constants/theme';
+import { colors, spacing } from '@/constants/theme';
 import { useGoogleSignIn } from '@/features/auth/useGoogleSignIn';
 import { useCountdown } from '@/hooks/useCountdown';
 
@@ -58,14 +58,12 @@ export default function SignInScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <BrandLogo width={260} />
-      <View style={styles.header}>
-        <Text style={font.title}>Sign in to OneTouchReview</Text>
-        <Text style={font.small}>{"We'll email you a 6-digit code."}</Text>
-      </View>
+      <AuthHeader title="Welcome back" subtitle="Sign in to your OneTouchReview account. We'll email you a 6-digit code." />
 
       <TextField
         label="Email"
+        icon="mail-outline"
+        placeholder="you@example.com"
         value={email}
         onChangeText={setEmail}
         error={emailError}
@@ -81,14 +79,16 @@ export default function SignInScreen() {
       {generalError ? <Text style={styles.error}>{generalError}</Text> : null}
 
       <Button
-        title={cooldown.active ? `Send me a code (${cooldown.remaining}s)` : 'Send me a code'}
+        title={cooldown.active ? `Continue (${cooldown.remaining}s)` : 'Continue'}
         onPress={sendCode}
         loading={sending}
         disabled={cooldown.active}
       />
+      <OrDivider />
       <Button
         title="Use password instead"
-        variant="text"
+        variant="secondary"
+        icon="lock-closed-outline"
         onPress={() => router.push({ pathname: '/password', params: { email: email.trim() } })}
       />
 
@@ -103,7 +103,6 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing.sm, marginTop: spacing.xl, marginBottom: spacing.md },
   error: { color: colors.danger, fontSize: 14 },
   google: { gap: spacing.sm, marginTop: spacing.md },
 });

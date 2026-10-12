@@ -4,14 +4,18 @@ import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } fro
 
 import { colors, radius, spacing, touchTarget } from '@/constants/theme';
 
+import type { IconName } from './IconTile';
+
 type Props = TextInputProps & {
   label: string;
   error?: string;
   hint?: string;
+  /** Optional icon inside the field, on the left. */
+  icon?: IconName;
 };
 
 export const TextField = forwardRef<TextInput, Props>(function TextField(
-  { label, error, hint, style, secureTextEntry, ...rest },
+  { label, error, hint, icon, style, secureTextEntry, ...rest },
   ref,
 ) {
   // Password fields get a show/hide toggle; the text starts hidden.
@@ -22,11 +26,22 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <View>
+        {icon ? (
+          <View style={styles.leading} pointerEvents="none">
+            <Ionicons name={icon} size={20} color={colors.textMuted} />
+          </View>
+        ) : null}
         <TextInput
           ref={ref}
           accessibilityLabel={label}
           placeholderTextColor={colors.textSubtle}
-          style={[styles.input, isSecret && styles.inputWithToggle, !!error && styles.inputError, style]}
+          style={[
+            styles.input,
+            !!icon && styles.inputWithIcon,
+            isSecret && styles.inputWithToggle,
+            !!error && styles.inputError,
+            style,
+          ]}
           secureTextEntry={isSecret && !revealed}
           {...rest}
         />
@@ -67,6 +82,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   inputWithToggle: { paddingRight: touchTarget },
+  inputWithIcon: { paddingLeft: spacing.md + 20 + spacing.sm },
+  leading: { position: 'absolute', left: spacing.md, top: 0, bottom: 0, justifyContent: 'center', zIndex: 1 },
   toggle: {
     position: 'absolute',
     right: 0,
