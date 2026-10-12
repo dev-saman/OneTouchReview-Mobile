@@ -18,10 +18,16 @@ export const notificationsApi = {
     ).unread_count,
 
   /** Last 30 days, newest first. cursor = next_cursor exactly as given. */
-  list: (location: LocationSelection, cursor?: string | null, signal?: AbortSignal) =>
+  /** unreadOnly sends unread=1. */
+  list: (location: LocationSelection, cursor?: string | null, signal?: AbortSignal, unreadOnly = false) =>
     network.get<NotificationsPage>(Paths.notifications, {
       signal,
-      params: { location_id: location, limit: NOTIFICATIONS_PAGE_SIZE, cursor: cursor ?? undefined },
+      params: {
+        location_id: location,
+        limit: NOTIFICATIONS_PAGE_SIZE,
+        cursor: cursor ?? undefined,
+        unread: unreadOnly ? 1 : undefined,
+      },
     }),
 
   /** On tap. Safe to call twice. 404 NOT_FOUND if gone or another user's. */

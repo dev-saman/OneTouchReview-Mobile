@@ -8,17 +8,17 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useNotificationBadge } from './BadgeProvider';
 
 /** GET /notifications: first page via useApiQuery, then "load more" with next_cursor, plus local read marks. */
-export function useNotificationsList(location: LocationSelection) {
+export function useNotificationsList(location: LocationSelection, unreadOnly = false) {
   const { setCount } = useNotificationBadge();
   const fetcher = useCallback(
     async (signal: AbortSignal) => {
-      const page = await notificationsApi.list(location, null, signal);
+      const page = await notificationsApi.list(location, null, signal, unreadOnly);
       setCount(page.unread_count);
       return page;
     },
-    [location, setCount],
+    [location, unreadOnly, setCount],
   );
-  const first = useApiQuery(location, fetcher);
+  const first = useApiQuery(`${location}|${unreadOnly ? 'unread' : 'all'}`, fetcher);
 
   // Later pages and read marks, reset whenever a new first page arrives.
   const [extra, setExtra] = useState<{ items: AppNotification[]; cursor: string | null; hasMore: boolean } | null>(null);
@@ -47,7 +47,7 @@ export function useNotificationsList(location: LocationSelection) {
     setLoadingMore(true);
     setMoreError(null);
     try {
-      const next = await notificationsApi.list(location, cursor);
+      const next = await notificationsApi.list(location, cursor, undefined, unreadOnly);
       setExtra((e) => {
         const seen = new Set([...(page?.notifications ?? []), ...(e?.items ?? [])].map((n) => n.id));
         return {
@@ -62,7 +62,7 @@ export function useNotificationsList(location: LocationSelection) {
       loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [cursor, hasMore, location, page]);
+  }, [cursor, hasMore, location, page, unreadOnly]);
 
   const markReadLocally = useCallback((ids: number[], at = new Date().toISOString()) => {
     setReadIds((r) => ({ ...r, ...Object.fromEntries(ids.map((id) => [id, at])) }));

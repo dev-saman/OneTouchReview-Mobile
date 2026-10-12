@@ -6,6 +6,8 @@ import { notificationsApi } from '@/api/notifications.api';
 import { AI_DRAFT_STATUS } from '@/api/reviews.api';
 import type { AppNotification } from '@/api/types';
 import { Button } from '@/components/ui/Button';
+import { Chips } from '@/components/ui/Chips';
+import { IconTile, type IconName, type TileTone } from '@/components/ui/IconTile';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, spacing, touchTarget } from '@/constants/theme';
 import { selectSelectedLocation } from '@/features/location/selectors';
@@ -20,10 +22,17 @@ import { formatRelative } from '@/utils/format';
 
 const WEB_MESSAGE = 'Open OneTouchReview on the web to fix this.';
 
-const SEVERITY_COLORS: Record<string, string> = {
-  urgent: colors.danger,
-  warning: colors.warning,
-  info: colors.info,
+/** One icon per notification kind (Notifications tab); urgent / warning / info set the colour. */
+const KIND_ICONS: Record<string, IconName> = {
+  private_feedback: 'chatbox-ellipses-outline',
+  google_review: 'star-outline',
+  ai_drafts: 'sparkles-outline',
+  review_point_alert: 'trending-up-outline',
+  google_connection: 'logo-google',
+  integration: 'link-outline',
+  sms_registration: 'chatbubble-outline',
+  texts_low: 'speedometer-outline',
+  not_sent: 'alert-circle-outline',
 };
 
 /** Screen 13: the bell list — last 30 days, newest first. */
@@ -36,7 +45,8 @@ export default function NotificationsScreen() {
 function NotificationsList({ location }: { location: LocationSelection }) {
   const router = useRouter();
   const badge = useNotificationBadge();
-  const list = useNotificationsList(location);
+  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const list = useNotificationsList(location, filter === 'unread');
   const [markingAll, setMarkingAll] = useState(false);
   const hasUnread = list.items.some((n) => !n.read_at);
 
@@ -114,6 +124,16 @@ function NotificationsList({ location }: { location: LocationSelection }) {
             ) : null,
         }}
       />
+      <View style={styles.controls}>
+        <Chips
+          options={[
+            { value: 'all', label: 'All' },
+            { value: 'unread', label: 'Unread' },
+          ]}
+          value={filter}
+          onChange={setFilter}
+        />
+      </View>
       {list.loading ? (
         <LoadingView />
       ) : list.error ? (
@@ -125,7 +145,13 @@ function NotificationsList({ location }: { location: LocationSelection }) {
           renderItem={({ item }) => <Row item={item} onPress={() => open(item)} />}
           ItemSeparatorComponent={Separator}
           contentContainerStyle={list.items.length ? undefined : styles.emptyContainer}
-          ListEmptyComponent={<EmptyState title="You're all caught up" message="Nothing needs your attention right now." />}
+          ListEmptyComponent={
+            <EmptyState
+              icon="notifications-outline"
+              title="You're all caught up"
+              message={filter === 'unread' ? 'No unread notifications.' : 'Nothing needs your attention right now.'}
+            />
+          }
           refreshControl={<RefreshControl refreshing={list.refreshing} onRefresh={list.refresh} tintColor={colors.primary} />}
           onEndReached={list.loadMore}
           onEndReachedThreshold={0.5}
@@ -147,7 +173,7 @@ function NotificationsList({ location }: { location: LocationSelection }) {
 
 function Row({ item, onPress }: { item: AppNotification; onPress: () => void }) {
   const unread = !item.read_at;
-  const color = SEVERITY_COLORS[item.severity] ?? colors.info;
+  const tone: TileTone = item.severity === 'urgent' ? 'danger' : item.severity === 'warning' ? 'accent' : 'brand';
   const meta = [item.location?.name, formatRelative(item.updated_at || item.created_at)].filter(Boolean).join(' · ');
 
   return (
@@ -157,7 +183,7 @@ function Row({ item, onPress }: { item: AppNotification; onPress: () => void }) 
       accessibilityLabel={`${unread ? 'Unread. ' : ''}${item.severity === 'urgent' ? 'Urgent. ' : ''}${item.title}. ${meta}`}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View style={[styles.severity, { backgroundColor: color }]} />
+      <IconTile name={KIND_ICONS[item.kind] ?? 'notifications-outline'} tone={tone} size={40} />
       <View style={styles.main}>
         <Text style={[styles.title, unread && styles.titleUnread]}>{item.title}</Text>
         {item.body ? <Text style={font.small}>{item.body}</Text> : null}
@@ -180,16 +206,16 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     minHeight: touchTarget + 16,
     paddingVertical: spacing.md,
-    paddingRight: spacing.lg,
+    paddingHorizontal: spacing.lg,
     backgroundColor: colors.surface,
   },
   pressed: { backgroundColor: colors.background },
-  severity: { width: 4, alignSelf: 'stretch', borderTopRightRadius: 2, borderBottomRightRadius: 2 },
   main: { flex: 1, gap: 2 },
   title: { fontSize: 16, color: colors.text },
   titleUnread: { fontWeight: '700' },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: spacing.lg },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: spacing.lg + 40 + spacing.md },
+  controls: { padding: spacing.lg, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
   emptyContainer: { flexGrow: 1 },
   footer: { padding: spacing.lg, gap: spacing.sm },
   center: { textAlign: 'center' },
