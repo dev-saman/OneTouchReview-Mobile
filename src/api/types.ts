@@ -312,6 +312,9 @@ export type ReplyCoach = {
 };
 
 // ---------------------------------------------------------------------------
+/** GET /chat-team: people a chat can be assigned to. */
+export type ChatTeamMember = { id: number; name: string; role: Role | string };
+
 // 6 Chats — GET /chats, /chats/{id}, POST …/messages, …/read, PATCH /chats/{id}, GET /chat-team, /chat-settings
 // ---------------------------------------------------------------------------
 
@@ -342,8 +345,8 @@ export type Chat = {
   location: LocationRef | null;
   visitor: { name: string | null; phone: string | null; email: string | null } | null;
   status: ChatStatus | string;
-  /** null in every example; shape when assigned is not documented (docs/API-GAPS.md #23). */
-  assigned_to: unknown;
+  /** Who the chat is assigned to, or null (API-GAPS #23). */
+  assigned_to: { id: number; name: string } | null;
   blocked: boolean;
   unread: number;
   last_message: ChatMessage | null;

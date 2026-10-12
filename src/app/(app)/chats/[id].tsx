@@ -1,6 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -20,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Card';
 import { ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
+import { AssignSheet } from '@/features/chats/AssignSheet';
 import { assignedName, channelLabel, chatTitle, deliveryLabel, textOrNull } from '@/features/chats/format';
 import { useOutbox, type OutgoingMessage } from '@/features/chats/useOutbox';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
@@ -70,6 +73,8 @@ export default function ChatScreen() {
   }, [lastFailure, refresh]);
 
   const [statusBusy, setStatusBusy] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [assignBusy, setAssignBusy] = useState(false);
 
   if (loading) return <LoadingView />;
   if (!data) return error ? <ErrorState error={error} onRetry={reload} /> : null;
@@ -84,11 +89,25 @@ export default function ChatScreen() {
     setStatusBusy(true);
     try {
       const updated = await chatsApi.setStatus(chat.id, chat.status === 'done' ? 'open' : 'done');
-      setChatChange({ status: updated.status });
+      setChatChange((change) => ({ ...change, status: updated.status }));
     } catch (e) {
       Alert.alert('Couldn’t update the chat', toApiError(e).message);
     } finally {
       setStatusBusy(false);
+    }
+  };
+
+  const assign = async (userId: number | null) => {
+    setAssigning(false);
+    if (userId === (chat.assigned_to?.id ?? null)) return;
+    setAssignBusy(true);
+    try {
+      const updated = await chatsApi.assign(chat.id, userId);
+      setChatChange((change) => ({ ...change, assigned_to: updated.assigned_to }));
+    } catch (e) {
+      Alert.alert('Couldn’t assign the chat', toApiError(e).message);
+    } finally {
+      setAssignBusy(false);
     }
   };
 
@@ -113,6 +132,13 @@ export default function ChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 96 : 0}
       >
+        <AssignBar chat={chat} busy={assignBusy} onPress={() => setAssigning(true)} />
+        <AssignSheet
+          visible={assigning}
+          currentId={chat.assigned_to?.id ?? null}
+          onPick={assign}
+          onClose={() => setAssigning(false)}
+        />
         <Messages
           chat={chat}
           messages={messages}
@@ -125,6 +151,26 @@ export default function ChatScreen() {
         <Composer chat={chat} quickReplies={data.quickReplies} onSend={send} />
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+/** Who the chat is assigned to; tap to change. */
+function AssignBar({ chat, busy, onPress }: { chat: Chat; busy: boolean; onPress: () => void }) {
+  const assignee = assignedName(chat.assigned_to);
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={busy}
+      accessibilityRole="button"
+      accessibilityLabel={assignee ? `Assigned to ${assignee}. Change` : 'Not assigned. Assign'}
+      style={({ pressed }) => [styles.assignBar, pressed && styles.assignPressed]}
+    >
+      <Ionicons name={assignee ? 'person-circle-outline' : 'person-add-outline'} size={20} color={colors.primary} />
+      <Text style={[font.small, styles.assignText]} numberOfLines={1}>
+        {assignee ? `Assigned to ${assignee}` : 'Not assigned'}
+      </Text>
+      {busy ? <ActivityIndicator size="small" color={colors.primary} /> : <Text style={styles.assignAction}>{assignee ? 'Change' : 'Assign'}</Text>}
+    </Pressable>
   );
 }
 
@@ -146,10 +192,7 @@ function Messages({
   onRefresh: () => void;
 }) {
   const scroll = useRef<ScrollView>(null);
-  const assignee = assignedName(chat.assigned_to);
-  const info = [channelLabel(chat.channel), chat.location?.name, assignee ? `Assigned to ${assignee}` : null]
-    .filter(Boolean)
-    .join(' · ');
+  const info = [channelLabel(chat.channel), chat.location?.name].filter(Boolean).join(' · ');
 
   return (
     <ScrollView
@@ -265,6 +308,19 @@ function Composer({ chat, quickReplies, onSend }: { chat: Chat; quickReplies: st
 }
 
 const styles = StyleSheet.create({
+  assignBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: touchTarget,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  assignPressed: { backgroundColor: colors.background },
+  assignText: { flex: 1 },
+  assignAction: { fontSize: 14, fontWeight: '700', color: colors.primary },
   safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   headerButton: { minHeight: touchTarget, paddingHorizontal: spacing.sm },

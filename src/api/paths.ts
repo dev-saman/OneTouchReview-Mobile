@@ -63,6 +63,7 @@ export const Paths = {
   chatMessages: (id: number) => `/chats/${id}/messages`,
   chatRead: (id: number) => `/chats/${id}/read`,
   chatSettings: '/chat-settings',
+  chatTeam: '/chat-team',
 
   // 8 My card
   digitalCards: '/digital-cards',

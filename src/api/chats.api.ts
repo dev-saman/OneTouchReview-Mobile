@@ -2,7 +2,7 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 
 import { network } from './network';
 import { Paths } from './paths';
-import type { Chat, ChatMessage, ChatsPage, ChatStatus } from './types';
+import type { Chat, ChatMessage, ChatsPage, ChatStatus, ChatTeamMember } from './types';
 
 export type ChatStatusFilter = ChatStatus | 'all';
 export type ChatAssignedFilter = 'any' | 'me' | 'none';
@@ -37,9 +37,17 @@ export const chatsApi = {
 
   markRead: async (id: number) => (await network.post<{ chat: Chat }>(Paths.chatRead(id))).chat,
 
-  /** Mark done / reopen. (Assigning: request field not documented, docs/API-GAPS.md #23.) */
+  /** Mark done / reopen. */
   setStatus: async (id: number, status: ChatStatus) =>
     (await network.patch<{ chat: Chat }>(Paths.chat(id), { status })).chat,
+
+  /** Assign to a user from /chat-team, or null to unassign. Someone outside the business → 422. */
+  assign: async (id: number, userId: number | null) =>
+    (await network.patch<{ chat: Chat }>(Paths.chat(id), { assigned_user_id: userId })).chat,
+
+  /** People a chat can be assigned to. */
+  team: async (signal?: AbortSignal) =>
+    (await network.get<{ users: ChatTeamMember[] }>(Paths.chatTeam, { signal })).users ?? [],
 
   /** Quick replies; shape of each item not documented (API-GAPS #24): only text items are used. */
   quickReplies: async (signal?: AbortSignal) => {

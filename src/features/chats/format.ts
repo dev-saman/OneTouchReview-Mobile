@@ -18,14 +18,9 @@ export function channelLabel(channel: string | null | undefined): string {
   return channel === 'sms' ? 'Text' : humanize(channel);
 }
 
-/** assigned_to is null in every example; shown only if it is a name or { name }. */
-export function assignedName(assignedTo: unknown): string | null {
-  if (typeof assignedTo === 'string' && assignedTo.trim()) return assignedTo.trim();
-  if (assignedTo && typeof assignedTo === 'object') {
-    const name = (assignedTo as { name?: unknown }).name;
-    if (typeof name === 'string' && name.trim()) return name.trim();
-  }
-  return null;
+/** The assignee's name, or null when the chat is unassigned. */
+export function assignedName(assignedTo: { id: number; name: string } | null | undefined): string | null {
+  return assignedTo?.name?.trim() || null;
 }
 
 /** reply_block / hold_reason: shown only when the API sends text. */

@@ -35,11 +35,10 @@ describe('chat format helpers', () => {
     expect(chatTitle({ customer: null, visitor: null })).toBe('Visitor');
   });
 
-  it('shows assigned_to only when it is a name', () => {
+  it('reads the assignee name from assigned_to { id, name }', () => {
     expect(assignedName(null)).toBeNull();
     expect(assignedName({ id: 1, name: 'Ann Smith' })).toBe('Ann Smith');
-    expect(assignedName('Ann')).toBe('Ann');
-    expect(assignedName({ id: 1 })).toBeNull();
+    expect(assignedName({ id: 1, name: '  ' })).toBeNull();
   });
 
   it('previews the last message', () => {
