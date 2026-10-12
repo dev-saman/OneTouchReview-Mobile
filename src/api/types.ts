@@ -549,6 +549,9 @@ export type SendResult = {
   customer_created?: boolean;
 };
 
+/** POST /review-requests channel: auto (text when possible, else email), sms or email. */
+export type ReviewChannel = 'auto' | 'sms' | 'email';
+
 export type NewClientInput = {
   name: string;
   phone?: string;
@@ -556,4 +559,5 @@ export type NewClientInput = {
   locationId: number;
   /** Required true when a phone is given; left out for email-only clients. */
   consentConfirmed?: boolean;
+  channel?: ReviewChannel;
 };

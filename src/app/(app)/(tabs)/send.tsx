@@ -5,10 +5,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fieldError } from '@/api/errors';
 import { reviewRequestsApi } from '@/api/reviewRequests.api';
-import type { ApiError, Customer, SendResult } from '@/api/types';
+import type { ApiError, Customer, ReviewChannel, SendResult } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Badge, Card } from '@/components/ui/Card';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { IconTile, type IconName } from '@/components/ui/IconTile';
 import { Screen } from '@/components/ui/Screen';
 import { EmptyState } from '@/components/ui/States';
 import { TextField } from '@/components/ui/TextField';
@@ -37,6 +38,7 @@ export default function SendScreen() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
+  const [channel, setChannel] = useState<ReviewChannel>('auto');
   // A specific location is required; "All locations" (or several) means the user picks one here.
   const [pickedLocation, setPickedLocation] = useState<number | null>(null);
   const [sending, setSending] = useState(false);
@@ -55,6 +57,9 @@ export default function SendScreen() {
 
   const hasPhone = phone.trim().length > 0;
   const hasEmail = email.trim().length > 0;
+  // The choice only matters when the client can get both; otherwise "auto" picks the only channel.
+  const canChoose = mode === 'existing' ? !!client?.phone && !!client?.email : hasPhone && hasEmail;
+  const effectiveChannel: ReviewChannel = canChoose ? channel : 'auto';
   const canSend =
     !!locationId &&
     !sending &&
@@ -72,6 +77,7 @@ export default function SendScreen() {
     setPhone('');
     setEmail('');
     setConsent(false);
+    setChannel('auto');
     setError(null);
     setResult(null);
   };
@@ -82,7 +88,7 @@ export default function SendScreen() {
     setError(null);
     try {
       if (mode === 'existing' && client) {
-        const answer = await reviewRequestsApi.send(client.id, locationId);
+        const answer = await reviewRequestsApi.send(client.id, locationId, effectiveChannel);
         setResult({ answer, customerId: client.id, clientName: client.name });
       } else {
         const answer = await reviewRequestsApi.sendToNewClient({
@@ -91,6 +97,7 @@ export default function SendScreen() {
           email,
           locationId,
           consentConfirmed: hasPhone ? consent : undefined,
+          channel: effectiveChannel,
         });
         setResult({ answer, customerId: answer.customer?.id ?? null, clientName: answer.customer?.name ?? name.trim() });
       }
@@ -193,6 +200,8 @@ export default function SendScreen() {
         </View>
       )}
 
+      {canChoose ? <ContactMethod value={channel} onChange={setChannel} /> : null}
+
       {refusal && error ? (
         <View style={styles.refusal} accessibilityLiveRegion="polite">
           <Text style={styles.refusalTitle}>{refusal.title}</Text>
@@ -218,6 +227,44 @@ export default function SendScreen() {
       />
       {!locationId ? <Text style={font.caption}>Choose a location first.</Text> : null}
     </Screen>
+  );
+}
+
+const CHANNELS: { value: ReviewChannel; icon: IconName; title: string; note: string }[] = [
+  { value: 'auto', icon: 'flash-outline', title: 'Automatic', note: 'Text when we can, otherwise email' },
+  { value: 'sms', icon: 'chatbubble-outline', title: 'Text message', note: 'Send the review request by text' },
+  { value: 'email', icon: 'mail-outline', title: 'Email', note: 'Send the review request by email' },
+];
+
+/** "Contact method" from the mockups: the API's channel (auto / sms / email). */
+function ContactMethod({ value, onChange }: { value: ReviewChannel; onChange: (value: ReviewChannel) => void }) {
+  return (
+    <View style={styles.section} accessibilityRole="radiogroup">
+      <Text style={styles.label}>Contact method</Text>
+      {CHANNELS.map((c) => {
+        const selected = c.value === value;
+        return (
+          <Pressable
+            key={c.value}
+            onPress={() => onChange(c.value)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            style={[styles.method, selected && styles.methodSelected]}
+          >
+            <IconTile name={c.icon} size={36} />
+            <View style={styles.methodText}>
+              <Text style={styles.methodTitle}>{c.title}</Text>
+              <Text style={font.caption}>{c.note}</Text>
+            </View>
+            <Ionicons
+              name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+              size={22}
+              color={selected ? colors.primary : colors.textSubtle}
+            />
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -275,6 +322,19 @@ function Sent({
 }
 
 const styles = StyleSheet.create({
+  method: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  methodSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  methodText: { flex: 1, gap: 2 },
+  methodTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   warning: {
     flexDirection: 'row',
     alignItems: 'flex-start',

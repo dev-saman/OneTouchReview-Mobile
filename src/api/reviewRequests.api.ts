@@ -1,25 +1,25 @@
 import { network } from './network';
 import { Paths } from './paths';
-import type { NewClientInput, ReviewRequest, SendResult } from './types';
+import type { NewClientInput, ReviewChannel, ReviewRequest, SendResult } from './types';
 
 /** Endpoints tab, review request rows. */
 export const reviewRequestsApi = {
-  /** "Send to an existing client". channel auto: text when possible, else email. */
-  send: (customerId: number, locationId: number) =>
-    network.post<SendResult>(Paths.reviewRequests, { customer_id: customerId, location_id: locationId, channel: 'auto' }),
+  /** "Send to an existing client". channel auto (default): text when possible, else email. */
+  send: (customerId: number, locationId: number, channel: ReviewChannel = 'auto') =>
+    network.post<SendResult>(Paths.reviewRequests, { customer_id: customerId, location_id: locationId, channel }),
 
   /**
    * "Add a client and send". With a phone, consent_confirmed must be true (consent_method defaults to
    * in_person). With only an email, the consent fields are left out and it goes by email.
    */
-  sendToNewClient: ({ name, phone, email, locationId, consentConfirmed }: NewClientInput) => {
+  sendToNewClient: ({ name, phone, email, locationId, consentConfirmed, channel = 'auto' }: NewClientInput) => {
     const hasPhone = !!phone?.trim();
     return network.post<SendResult>(Paths.reviewRequestsWithCustomer, {
       name: name.trim(),
       phone: hasPhone ? phone!.trim() : undefined,
       email: email?.trim() || undefined,
       location_id: locationId,
-      channel: 'auto',
+      channel,
       ...(hasPhone ? { consent_confirmed: consentConfirmed === true } : {}),
     });
   },

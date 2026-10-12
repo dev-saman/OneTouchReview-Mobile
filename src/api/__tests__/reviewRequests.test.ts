@@ -52,3 +52,12 @@ describe('reviewRequestsApi.send', () => {
     expect(post).toHaveBeenCalledWith('/review-requests', { customer_id: 55, location_id: 1498, channel: 'auto' });
   });
 });
+
+describe('contact method', () => {
+  it('sends the chosen channel', async () => {
+    await reviewRequestsApi.send(55, 1498, 'email');
+    expect(post).toHaveBeenCalledWith('/review-requests', { customer_id: 55, location_id: 1498, channel: 'email' });
+    await reviewRequestsApi.sendToNewClient({ name: 'Nina', phone: '5125550123', email: 'nina@example.com', locationId: 1, consentConfirmed: true, channel: 'sms' });
+    expect(post.mock.calls[1][1]).toMatchObject({ channel: 'sms', consent_confirmed: true });
+  });
+});
