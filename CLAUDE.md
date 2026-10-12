@@ -37,8 +37,8 @@ React Native + Expo (TypeScript) app for OneTouchReview business owners and staf
 - Roles from `/auth/me` `user.role` (owner/manager/staff): use `can()` in `src/config/permissions.ts`; server 403 is still authoritative.
 - Adding a client with a phone needs the consent tick ("This client agreed to receive texts from us"); never pre-tick; send `consent_confirmed: true` only after explicit confirmation. Email-only clients: no tick, no consent fields.
 - Send a new UUID `client_id` (expo-crypto `randomUUID`) with chat replies and Resend; reuse it when retrying the same operation.
-- Push: expo-notifications; `POST /devices` after permission (asked after sign-in). iOS token type is an OPEN QUESTION (docs/API-GAPS.md) — do not pick an iOS implementation until answered.
-- Realtime: Laravel Reverb via Pusher protocol, config from `/app-config`, channel `business.{id}.chats`. Auth endpoint/events are an OPEN QUESTION — do not guess. App must work without realtime (refresh on focus).
+- Push: expo-notifications; `POST /devices` after permission (asked after sign-in), once per token. `fcm_token` is an FCM registration token on both platforms (API-GAPS #1, answered 2026-10-08): Android uses the native token; iOS needs Firebase Messaging `getToken()`, never the raw APNs token. Not built yet: adding `@react-native-firebase/messaging` (via `npx expo install`) needs the owner's OK first.
+- Realtime: Laravel Reverb via Pusher protocol (API-GAPS #2, answered 2026-10-08). Config from `/app-config` `reverb`; channel `private-business.{id}.chats`; events `chat.message` `{ chat_id, message }` and `chat.updated` `{ chat_id }` (re-fetch the chat). Auth is `POST /broadcasting/auth`, which is NOT in the Sheet yet: don't build realtime until it's added. App must keep working without realtime (refresh on focus / polling).
 - NFC: react-native-nfc-manager, NDEF URI record with `short_url`; always cancel the technology request. No phone-to-phone NFC sharing.
 - Never log tokens, passwords, codes, Google tokens or client content. Never commit secrets, test logins, keystores, `google-services.json` or `GoogleService-Info.plist`.
 
