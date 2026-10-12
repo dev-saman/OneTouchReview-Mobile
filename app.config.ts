@@ -17,6 +17,8 @@ const googleIosUrlScheme = process.env.GOOGLE_IOS_URL_SCHEME;
 
 const plugins: ExpoConfig['plugins'] = [
   'expo-router',
+  // Android Studio sync fails when the project path has a space (expo-modules-core bug).
+  './plugins/with-stub-pch-space-fix',
   [
     'expo-splash-screen',
     {
