@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { AI_DRAFT_STATUS, reviewsApi } from '@/api/reviews.api';
+import { AI_DRAFT_STATUS, reviewsApi, waitingDraftText, type ReviewStatus } from '@/api/reviews.api';
 import type { GoogleReview, ReviewsPage } from '@/api/types';
 import { Badge } from '@/components/ui/Card';
 import { Chips } from '@/components/ui/Chips';
@@ -19,10 +19,12 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
 import { formatDate, formatRating } from '@/utils/format';
 
-type Filter = 'all' | 'ai' | '1' | '2' | '3' | '4' | '5';
+type Filter = 'all' | 'no-reply' | 'negative' | 'ai' | '1' | '2' | '3' | '4' | '5';
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'All' },
+  { value: 'no-reply', label: 'Needs a reply' },
+  { value: 'negative', label: 'Negative' },
   { value: 'ai', label: 'AI drafts' },
   { value: '1', label: '1 ★' },
   { value: '2', label: '2 ★' },
@@ -30,6 +32,12 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: '4', label: '4 ★' },
   { value: '5', label: '5 ★' },
 ];
+
+function statusFor(filter: Filter): ReviewStatus | undefined {
+  if (filter === 'ai') return AI_DRAFT_STATUS;
+  if (filter === 'no-reply' || filter === 'negative') return filter;
+  return undefined;
+}
 
 type Summary = Pick<ReviewsPage, 'filtered_total' | 'need_reply_count' | 'negative_count' | 'ai_drafts' | 'avg_rating'>;
 
@@ -55,8 +63,8 @@ function ReviewsList({ location }: { location: LocationSelection }) {
           location,
           page: page ?? 1,
           search,
-          status: filter === 'ai' ? AI_DRAFT_STATUS : undefined,
-          rating: filter !== 'all' && filter !== 'ai' ? Number(filter) : undefined,
+          status: statusFor(filter),
+          rating: /^[1-5]$/.test(filter) ? Number(filter) : undefined,
         },
         signal,
       );
@@ -112,7 +120,18 @@ function ReviewsList({ location }: { location: LocationSelection }) {
           contentContainerStyle={list.items.length ? undefined : styles.empty}
           ListEmptyComponent={
             <EmptyState
-              title={filter === 'ai' ? 'No AI drafts waiting' : search ? 'No matches' : 'No reviews yet'}
+              icon="star-outline"
+              title={
+                search
+                  ? 'No matches'
+                  : filter === 'ai'
+                    ? 'No AI drafts waiting'
+                    : filter === 'no-reply'
+                      ? 'All caught up'
+                      : filter === 'negative'
+                        ? 'No negative reviews'
+                        : 'No reviews yet'
+              }
               message={filter === 'all' && !search ? 'Google reviews for this location appear here.' : undefined}
             />
           }
@@ -139,7 +158,7 @@ function SummaryLine({ summary }: { summary: Summary }) {
 
 function Row({ item, onPress }: { item: GoogleReview; onPress: () => void }) {
   const replied = !!item.reply_comment;
-  const hasDraft = typeof item.ai_reply === 'string' && !!item.ai_reply;
+  const hasDraft = !!waitingDraftText(item.ai_reply);
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <View style={styles.rowTop}>

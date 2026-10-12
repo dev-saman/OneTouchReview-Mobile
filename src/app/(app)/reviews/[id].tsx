@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { COACH_MIN, REPLY_MAX, reviewsApi } from '@/api/reviews.api';
+import { COACH_MIN, REPLY_MAX, reviewsApi, waitingDraftText } from '@/api/reviews.api';
 import type { ApiError, GoogleReview, ReplyCoach } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Badge, Card } from '@/components/ui/Card';
@@ -64,7 +64,7 @@ export default function ReviewDetailScreen() {
 
 function ReplySection({ review, onChanged }: { review: GoogleReview; onChanged: (change: Partial<GoogleReview>) => void }) {
   const posted = review.reply_comment;
-  const waitingDraft = typeof review.ai_reply === 'string' ? review.ai_reply : '';
+  const waitingDraft = waitingDraftText(review.ai_reply);
   const [editing, setEditing] = useState(!posted);
   const [text, setText] = useState(posted ?? waitingDraft);
   const [busy, setBusy] = useState<'draft' | 'coach' | 'save' | 'delete' | null>(null);

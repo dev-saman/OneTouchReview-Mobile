@@ -264,6 +264,14 @@ export type FeedbackPage = { feedback: PrivateFeedback[]; page: number; has_more
 
 export type ReviewPoint = { id: number; name: string; kind: string };
 
+export type AiReply = {
+  status: string;
+  text: string | null;
+  scheduled_at: string | null;
+  posted_at: string | null;
+  reason: string | null;
+};
+
 export type GoogleReview = {
   id: number;
   reviewer_name: string | null;
@@ -273,8 +281,8 @@ export type GoogleReview = {
   review_time: string | null;
   reply_comment: string | null;
   reply_time: string | null;
-  /** A waiting AI draft when present (null in every example). */
-  ai_reply: unknown;
+  /** The AI reply for this review, or null (API-GAPS #22). A waiting draft has status "draft". */
+  ai_reply: AiReply | null;
   points?: ReviewPoint[] | null;
   location?: LocationRef | null;
 };

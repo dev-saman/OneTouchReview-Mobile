@@ -2,14 +2,21 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 
 import { network } from './network';
 import { Paths } from './paths';
-import type { GoogleReview, ReplyCoach, ReplyResult, ReviewsPage } from './types';
+import type { AiReply, GoogleReview, ReplyCoach, ReplyResult, ReviewsPage } from './types';
 
-/** Notifications tab: ai_drafts opens Reviews with status=ai-draft (the only documented status value). */
+/** Notifications tab: ai_drafts opens Reviews with status=ai-draft. */
 export const AI_DRAFT_STATUS = 'ai-draft';
+
+/** `status` filter values (API-GAPS #22). "negative" is 3 stars and below. */
+export type ReviewStatus = 'no-reply' | 'negative' | typeof AI_DRAFT_STATUS;
+
+/** The waiting AI draft's text, or '' when there is none. */
+export const waitingDraftText = (aiReply: AiReply | null | undefined): string =>
+  aiReply?.status === 'draft' && aiReply.text ? aiReply.text : '';
 
 export type ReviewsQuery = {
   location: LocationSelection;
-  status?: typeof AI_DRAFT_STATUS;
+  status?: ReviewStatus;
   rating?: number;
   search?: string;
   page: number;
