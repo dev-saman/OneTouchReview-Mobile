@@ -146,14 +146,34 @@ function ReviewsList({ location }: { location: LocationSelection }) {
   );
 }
 
+/** Rating summary from the mockups: average, stars and counts (the API has no per-star breakdown). */
 function SummaryLine({ summary }: { summary: Summary }) {
-  const parts = [
-    `${summary.filtered_total} ${summary.filtered_total === 1 ? 'review' : 'reviews'}`,
-    summary.avg_rating ? `${formatRating(summary.avg_rating)} ★ average` : null,
+  const notes = [
     summary.need_reply_count ? `${summary.need_reply_count} need a reply` : null,
+    summary.negative_count ? `${summary.negative_count} negative` : null,
     summary.ai_drafts ? `${summary.ai_drafts} AI ${summary.ai_drafts === 1 ? 'draft' : 'drafts'} waiting` : null,
   ].filter(Boolean);
-  return <Text style={font.caption}>{parts.join(' · ')}</Text>;
+  const count = `${summary.filtered_total} ${summary.filtered_total === 1 ? 'review' : 'reviews'}`;
+  return (
+    <View
+      style={styles.summary}
+      accessible
+      accessibilityLabel={[
+        summary.avg_rating ? `${formatRating(summary.avg_rating)} stars on average` : null,
+        count,
+        ...notes,
+      ]
+        .filter(Boolean)
+        .join(', ')}
+    >
+      {summary.avg_rating ? <Text style={styles.average}>{summary.avg_rating.toFixed(1)}</Text> : null}
+      <View style={styles.summaryText}>
+        {summary.avg_rating ? <Stars rating={summary.avg_rating} size={18} /> : null}
+        <Text style={font.small}>{count}</Text>
+        {notes.length ? <Text style={font.caption}>{notes.join(' · ')}</Text> : null}
+      </View>
+    </View>
+  );
 }
 
 function Row({ item, onPress }: { item: GoogleReview; onPress: () => void }) {
@@ -188,6 +208,9 @@ function Separator() {
 }
 
 const styles = StyleSheet.create({
+  summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  average: { fontSize: 36, fontWeight: '800', color: colors.text },
+  summaryText: { flex: 1, gap: 2 },
   screen: { flex: 1, backgroundColor: colors.background },
   controls: {
     padding: spacing.lg,
