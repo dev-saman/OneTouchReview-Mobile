@@ -57,7 +57,7 @@ function RootNavigator() {
   if (phase === 'booting') {
     return (
       <>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <LaunchScreen onReady={hideSplash} />
       </>
     );

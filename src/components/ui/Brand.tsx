@@ -3,6 +3,7 @@ import { Image, StyleSheet } from 'react-native';
 const MARK = require('../../../assets/images/brand-mark.png');
 const LOGO = require('../../../assets/images/brand-logo.png');
 const WORDMARK = require('../../../assets/images/brand-wordmark.png');
+const WORDMARK_LIGHT = require('../../../assets/images/brand-wordmark-light.png');
 
 /** The shield mark (512×474 source). */
 export function BrandMark({ size = 32 }: { size?: number }) {
@@ -36,6 +37,20 @@ export function BrandWordmark({ width = 240 }: { width?: number }) {
   return (
     <Image
       source={WORDMARK}
+      style={[styles.logo, { width, height: Math.round((width * 96) / 900) }]}
+      resizeMode="contain"
+      accessibilityRole="image"
+      accessibilityLabel="OneTouchReview"
+      accessibilityIgnoresInvertColors
+    />
+  );
+}
+
+/** White "OneTouch" + teal "Review", for dark backgrounds. */
+export function BrandWordmarkLight({ width = 240 }: { width?: number }) {
+  return (
+    <Image
+      source={WORDMARK_LIGHT}
       style={[styles.logo, { width, height: Math.round((width * 96) / 900) }]}
       resizeMode="contain"
       accessibilityRole="image"

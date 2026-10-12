@@ -20,7 +20,8 @@ const plugins: ExpoConfig['plugins'] = [
   [
     'expo-splash-screen',
     {
-      backgroundColor: '#FFFFFF',
+      // Matches LAUNCH_COLORS.top in src/components/ui/LaunchScreen.tsx (dark brand splash).
+      backgroundColor: '#0A2A3A',
       image: './assets/images/splash-icon.png',
       imageWidth: 120,
     },
