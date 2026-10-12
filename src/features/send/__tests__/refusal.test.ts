@@ -1,6 +1,6 @@
 import { errorFromResponse, makeError } from '@/api/errors';
 
-import { describeRefusal } from '../refusal';
+import { describeRefusal, describeSendWarning } from '../refusal';
 
 const refused = (status: number, code: string, details?: Record<string, unknown>) =>
   errorFromResponse(status, { error: { code, message: 'Server says no.', details } });
@@ -37,5 +37,17 @@ describe('describeRefusal', () => {
   it('ignores details with unexpected shapes', () => {
     const r = describeRefusal(refused(422, 'NO_CHANNEL', { sms: { reason: 'x' }, email: 42 }));
     expect(r.details).toEqual([]);
+  });
+});
+
+describe('describeSendWarning', () => {
+  it('turns the daily-limit codes into plain words', () => {
+    expect(describeSendWarning('DAILY_LIMIT_NEAR')).toMatch(/close to today’s text limit/);
+    expect(describeSendWarning('DAILY_LIMIT_REACHED')).toMatch(/tomorrow morning/);
+  });
+
+  it('shows nothing for no warning or an unknown code', () => {
+    expect(describeSendWarning(null)).toBeNull();
+    expect(describeSendWarning('SOMETHING_NEW')).toBeNull();
   });
 });

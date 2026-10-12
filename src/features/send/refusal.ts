@@ -65,3 +65,17 @@ export function describeRefusal(error: ApiError): Refusal {
     canConfirmConsent: code === 'NO_CONSENT',
   };
 }
+
+/**
+ * POST /review-requests `warning` (API-GAPS #18): a code string or null. The send still
+ * succeeded; texts over the daily limit wait until the next morning. Unknown codes are
+ * not shown (never a raw code on screen).
+ */
+const SEND_WARNINGS: Record<string, string> = {
+  DAILY_LIMIT_NEAR: 'You’re close to today’s text limit. More texts today may wait until tomorrow morning.',
+  DAILY_LIMIT_REACHED: 'Today’s text limit is reached, so this text goes out tomorrow morning.',
+};
+
+export function describeSendWarning(warning: string | null | undefined): string | null {
+  return warning ? (SEND_WARNINGS[warning] ?? null) : null;
+}

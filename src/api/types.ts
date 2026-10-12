@@ -484,8 +484,8 @@ export type SendResult = {
   review_request: { id: number; status: string; channel: string | null; scheduled_at: string | null };
   /** When it goes out (quiet hours / send delay); null when sent now. */
   sends_at: string | null;
-  /** null in every example; shape unknown (docs/API-GAPS.md #18), shown only when it is text. */
-  warning: unknown;
+  /** DAILY_LIMIT_NEAR | DAILY_LIMIT_REACHED or null (API-GAPS #18). The send still succeeded. */
+  warning: string | null;
   /** with-customer only. */
   customer?: Customer;
   customer_created?: boolean;

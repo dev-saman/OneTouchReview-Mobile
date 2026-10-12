@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -14,7 +15,7 @@ import { TextField } from '@/components/ui/TextField';
 import { colors, font, radius, spacing } from '@/constants/theme';
 import { selectSelectedLocation } from '@/features/location/selectors';
 import { ClientSearch } from '@/features/send/ClientSearch';
-import { describeRefusal } from '@/features/send/refusal';
+import { describeRefusal, describeSendWarning } from '@/features/send/refusal';
 import { toApiError } from '@/hooks/useApiQuery';
 import { useAppSelector } from '@/store/hooks';
 import { formatDate, formatDateTime, formatPhone, isFuture } from '@/utils/format';
@@ -244,7 +245,7 @@ function Sent({
 }) {
   const { answer, customerId, clientName } = result;
   const later = isFuture(answer.sends_at);
-  const warning = typeof answer.warning === 'string' && answer.warning.trim() ? answer.warning : null;
+  const warning = describeSendWarning(answer.warning);
 
   return (
     <Screen>
@@ -260,7 +261,12 @@ function Sent({
           <Text style={font.small}>Texts only go out 8am–9pm in the client’s time; some businesses also wait a set time after the visit.</Text>
         ) : null}
         {answer.customer_created ? <Badge label="New client added" tone="success" /> : null}
-        {warning ? <Badge label={warning} tone="warning" /> : null}
+        {warning ? (
+          <View style={styles.warning}>
+            <Ionicons name="time-outline" size={18} color={colors.warning} />
+            <Text style={styles.warningText}>{warning}</Text>
+          </View>
+        ) : null}
       </Card>
       <Button title="Send another" onPress={onAnother} />
       {customerId ? <Button title={`Open ${clientName}`} variant="secondary" onPress={() => onOpenClient(customerId)} /> : null}
@@ -269,6 +275,15 @@ function Sent({
 }
 
 const styles = StyleSheet.create({
+  warning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.warningSurface,
+  },
+  warningText: { flex: 1, fontSize: 14, color: colors.warning },
   tabs: { flexDirection: 'row', backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: 4, gap: 4 },
   tab: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
   tabActive: { backgroundColor: colors.primary },
