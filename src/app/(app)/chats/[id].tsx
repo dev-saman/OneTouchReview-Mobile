@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CHAT_MESSAGE_MAX, chatsApi } from '@/api/chats.api';
 import type { Chat, ChatMessage } from '@/api/types';
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Card';
 import { ErrorState, LoadingView } from '@/components/ui/States';
@@ -116,6 +117,7 @@ export default function ChatScreen() {
       <Stack.Screen
         options={{
           title: chatTitle(chat),
+          headerTitle: () => <ChatHeaderTitle chat={chat} />,
           headerRight: () => (
             <Button
               title={chat.status === 'done' ? 'Reopen' : 'Mark done'}
@@ -151,6 +153,26 @@ export default function ChatScreen() {
         <Composer chat={chat} quickReplies={data.quickReplies} onSend={send} />
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+/** Avatar, name and channel / location in the header, as in the mockups. */
+function ChatHeaderTitle({ chat }: { chat: Chat }) {
+  const sub = [channelLabel(chat.channel), chat.location?.name].filter(Boolean).join(' · ');
+  return (
+    <View style={styles.headerTitle}>
+      <Avatar name={chatTitle(chat)} size={34} />
+      <View style={styles.headerText}>
+        <Text style={styles.headerName} numberOfLines={1} accessibilityRole="header">
+          {chatTitle(chat)}
+        </Text>
+        {sub ? (
+          <Text style={font.caption} numberOfLines={1}>
+            {sub}
+          </Text>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
@@ -308,6 +330,9 @@ function Composer({ chat, quickReplies, onSend }: { chat: Chat; quickReplies: st
 }
 
 const styles = StyleSheet.create({
+  headerTitle: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, maxWidth: 220 },
+  headerText: { flexShrink: 1 },
+  headerName: { fontSize: 16, fontWeight: '700', color: colors.text },
   assignBar: {
     flexDirection: 'row',
     alignItems: 'center',
