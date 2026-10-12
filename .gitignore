@@ -57,3 +57,6 @@ GoogleService-Info.plist
 # signing material
 *.keystore
 credentials.json
+
+# Google Play store screenshots (generated locally, uploaded by hand)
+play-store-screenshots/
