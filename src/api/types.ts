@@ -249,6 +249,10 @@ export type PrivateFeedback = {
   review_request_id: number | null;
   location: LocationRef | null;
   created_at: string;
+  /** Top-level urgent flag (API-GAPS #21). */
+  urgent?: boolean;
+  /** null until AI has read the item (API-GAPS #21). `flags` is not used by the app. */
+  triage?: { urgent: boolean; summary: string | null; read_at: string | null } | null;
 };
 
 /** Page-based: "page" plus has_more. */

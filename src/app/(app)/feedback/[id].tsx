@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge, Card, InfoRow } from '@/components/ui/Card';
 import { Stars } from '@/components/ui/Stars';
 import { ErrorState, LoadingView } from '@/components/ui/States';
-import { colors, font, spacing } from '@/constants/theme';
+import { colors, font, radius, spacing } from '@/constants/theme';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
 import { formatDateTime, formatPhone } from '@/utils/format';
 
@@ -44,8 +44,15 @@ function FeedbackCard({ feedback }: { feedback: PrivateFeedback }) {
     <Card>
       <View style={styles.headerRow}>
         <Stars rating={feedback.rating} size={20} />
+        {feedback.urgent ? <Badge label="Urgent" tone="danger" /> : null}
         {feedback.source === 'card' ? <Badge label="From your card" /> : null}
       </View>
+      {feedback.triage?.summary ? (
+        <View style={styles.summary}>
+          <Text style={font.caption}>AI summary</Text>
+          <Text style={font.body}>{feedback.triage.summary}</Text>
+        </View>
+      ) : null}
       {feedback.text ? <Text style={styles.text}>{feedback.text}</Text> : <Text style={font.small}>No comment, rating only.</Text>}
       {points.length ? (
         <View style={styles.points}>
@@ -144,8 +151,9 @@ function SuggestedReply({ feedbackId, phone }: { feedbackId: number; phone: stri
 }
 
 const styles = StyleSheet.create({
+  summary: { gap: 2, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.primarySoft },
   content: { padding: spacing.lg, gap: spacing.lg },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
   text: { fontSize: 17, lineHeight: 24, color: colors.text },
   points: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

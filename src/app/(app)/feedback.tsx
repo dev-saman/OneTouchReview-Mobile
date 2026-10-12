@@ -100,6 +100,7 @@ function Row({ item, onPress }: { item: PrivateFeedback; onPress: () => void }) 
         </Text>
       ) : null}
       <View style={styles.rowMeta}>
+        {item.urgent ? <Badge label="Urgent" tone="danger" /> : null}
         {item.source === 'card' ? <Badge label="Card" /> : null}
         {meta ? <Text style={font.caption}>{meta}</Text> : null}
       </View>
