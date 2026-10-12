@@ -30,6 +30,9 @@ export const authApi = {
   /** Also removes this device's push registration. */
   logout: () => network.post<unknown>(Paths.logout),
 
+  /** Ends a session the app doesn't keep (Google sign-in that created a new account, API-GAPS #11). */
+  logoutToken: (token: string) => network.post<unknown>(Paths.logout, undefined, { bearerToken: token }),
+
   /** Signed-in devices; current: true marks this phone. */
   sessions: async (signal?: AbortSignal) =>
     (await network.get<{ sessions: DeviceSession[] }>(Paths.sessions, { signal })).sessions ?? [],

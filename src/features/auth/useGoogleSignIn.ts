@@ -31,7 +31,9 @@ export function useGoogleSignIn() {
       if (!idToken) return; // cancelled
       const response = await authApi.googleIdToken(idToken);
       if (response.is_new_user === true) {
-        // New accounts are set up on the web only. The session is not kept in the app.
+        // New accounts are set up on the web only. The session is not kept in the app,
+        // so end it on the server too (API-GAPS #11). Best effort: it expires on its own.
+        void authApi.logoutToken(response.token).catch(() => undefined);
         router.replace('/finish-on-web');
         return;
       }

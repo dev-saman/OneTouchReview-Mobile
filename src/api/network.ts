@@ -34,6 +34,8 @@ declare module 'axios' {
   interface AxiosRequestConfig {
     /** Attach the bearer token. Defaults to true except for PUBLIC_PATHS. */
     requiresAuth?: boolean;
+    /** Send this token instead of the stored one (a token the app never keeps). */
+    bearerToken?: string;
     _isRefresh?: boolean;
     /** Retried once with a token that rotated while this request was in flight. */
     _retriedWithNewToken?: boolean;
@@ -51,6 +53,8 @@ export type RequestOptions = {
   signal?: AbortSignal;
   timeout?: number;
   requiresAuth?: boolean;
+  /** Send this token instead of the stored one. A 401 then never signs the app out. */
+  bearerToken?: string;
 };
 
 export type UploadFile = { uri: string; name: string; type: string };
@@ -197,7 +201,7 @@ client.interceptors.request.use(async (config) => {
   // Requests issued while a refresh is running wait for the new token.
   if (refreshInFlight && !config._isRefresh) await refreshInFlight.catch(() => undefined);
 
-  const token = tokenStorage.get()?.token;
+  const token = config.bearerToken ?? tokenStorage.get()?.token;
   if (!token) throw makeError('unauthorized', { status: 401 });
   config.headers.set('Authorization', `Bearer ${token}`);
   config._tokenUsed = token;

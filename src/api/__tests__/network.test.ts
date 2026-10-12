@@ -31,6 +31,18 @@ describe('request basics', () => {
     expect(authHeader(calls[1])).toBeUndefined();
   });
 
+  it('sends an explicit bearer token without a stored one, and its 401 never signs out', async () => {
+    const onUnauthorized = jest.fn();
+    const off = sessionEvents.on('unauthorized', onUnauthorized);
+    const calls = mockHttp(() => ({ status: 401, data: { error: { code: 'UNAUTHENTICATED', message: 'Expired' } } }));
+    await expect(network.post('/auth/logout', undefined, { bearerToken: 'new-user-tok' })).rejects.toMatchObject({
+      kind: 'unauthorized',
+    });
+    expect(authHeader(calls[0])).toBe('Bearer new-user-tok');
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    off();
+  });
+
   it('drops empty query params', async () => {
     await tokenStorage.save('tok-1', inDays(80));
     const calls = mockHttp(() => ({ status: 200, data: {} }));
