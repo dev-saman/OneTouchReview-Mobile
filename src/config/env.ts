@@ -13,6 +13,9 @@ export const Config = {
   apiOrigin: 'https://api.onetouchreview.com',
   apiBaseUrl: 'https://api.onetouchreview.com/api/v1',
 
+  /** The web app, for things done on the web only (API-GAPS #13). Never a billing link. */
+  webAppUrl: 'https://app.onetouchreview.com',
+
   requestTimeoutMs: 20_000,
   uploadTimeoutMs: 60_000,
 

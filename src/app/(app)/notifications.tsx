@@ -15,6 +15,7 @@ import { useNotificationsList } from '@/features/notifications/useNotificationsL
 import { toApiError } from '@/hooks/useApiQuery';
 import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
+import { openWebApp } from '@/services/web/openWebApp';
 import { formatRelative } from '@/utils/format';
 
 const WEB_MESSAGE = 'Open OneTouchReview on the web to fix this.';
@@ -73,7 +74,10 @@ function NotificationsList({ location }: { location: LocationSelection }) {
         router.navigate({ pathname: '/clients', params: { filter: 'not_sent' } });
         return;
       case 'webOnly':
-        Alert.alert(n.title, [n.body, WEB_MESSAGE].filter(Boolean).join('\n\n'));
+        Alert.alert(n.title, [n.body, WEB_MESSAGE].filter(Boolean).join('\n\n'), [
+          { text: 'Close', style: 'cancel' },
+          { text: 'Open on the web', onPress: openWebApp },
+        ]);
         return;
       case 'messageOnly':
         // texts_low: never a link to billing or plans.

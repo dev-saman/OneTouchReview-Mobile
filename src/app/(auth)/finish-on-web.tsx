@@ -5,6 +5,7 @@ import { BrandMark } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { font, spacing } from '@/constants/theme';
+import { openWebApp } from '@/services/web/openWebApp';
 
 /** Google sign-in created a new account (is_new_user). Onboarding is web-only. */
 export default function FinishOnWebScreen() {
@@ -19,7 +20,8 @@ export default function FinishOnWebScreen() {
           then sign in here.
         </Text>
       </View>
-      <Button title="Back to sign in" onPress={() => router.dismissTo('/sign-in')} />
+      <Button title="Open OneTouchReview on the web" onPress={openWebApp} icon="open-outline" />
+      <Button title="Back to sign in" variant="text" onPress={() => router.dismissTo('/sign-in')} />
     </Screen>
   );
 }
