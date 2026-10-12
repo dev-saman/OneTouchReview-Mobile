@@ -64,6 +64,7 @@ Shared building blocks: `useApiQuery(key, fetcher)` (keyed loads, stale requests
 - The build guide (Google Doc) exports as text: `https://docs.google.com/document/d/1VciMlI4NrYcgis-KnXNOqYjhWpglZyVSppm6TDSdhoE/export?format=txt`
 
 ## Gotchas
+- **`expo run:android` reuses an existing `android/` folder**, so changes to icons, splash, colours or `app.config.ts` don't reach the build (2026-10-12: the notification colour stayed the old blue). Regenerate first with `npx expo prebuild --platform android --clean` (safe: `android/` is generated and gitignored), then `npx expo run:android --no-bundler`.
 - **Push token fired twice:** in expo-notifications, fetching the device token also fires the token-change listener with the same token. `registerDevice()` skips a token already registered or in flight, retries after a failure and resets when PushManager unmounts on sign-out.
 - **Expo Router index routes:** the generated types name `folder/index.tsx` as `/folder/index`, which does **not** resolve at runtime ("Unmatched Route"). Use `folder.tsx` next to `folder/` instead (as `profile.tsx`, `feedback.tsx`, `reviews.tsx`, `card.tsx` do).
 - **Route types lag behind new files.** If typecheck rejects a new route, touch the file (or reload the app) so Metro regenerates `.expo/types/router.d.ts`.
@@ -108,7 +109,7 @@ Shared building blocks: `useApiQuery(key, fetcher)` (keyed loads, stale requests
 - Emulator: `adb reverse tcp:8081 tcp:8081`, then open the dev client at `exp+onetouchreview://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081`.
 - **Emulator networking is flaky.** If the app shows "You're offline" / "That took too long" while the PC is online, restart it with `emulator -avd Medium_Phone_API_36 -dns-server 8.8.8.8 -no-snapshot-load`. The same cold boot fixes a **stuck splash screen** (white screen with the logo while the log shows the API calls succeeding): `adb shell dumpsys SurfaceFlinger --list` shows a "Splash Screen com.onetouchreview.app" layer left on top.
 - Start Metro with `npx expo start --dev-client` (or `npm start`), never `npx react-native start` — that's the bare React Native CLI, which this Expo project doesn't use.
-- Rebuild native only when native deps / `app.config.ts` plugins change: `npx expo run:android --no-bundler`. If it fails at the install step, `adb push` the APK (`android/app/build/outputs/apk/debug/app-debug.apk`) to `/data/local/tmp` and `adb shell pm install -r` it.
+- Rebuild native only when native deps, `app.config.ts`, icons or the splash change: `npx expo prebuild --platform android --clean`, then `npx expo run:android --no-bundler`. If it fails at the install step, `adb push` the APK (`android/app/build/outputs/apk/debug/app-debug.apk`) to `/data/local/tmp` and `adb shell pm install -r` it.
 - Screenshots: `adb shell screencap -p /sdcard/s.png` then `adb pull` (PowerShell `>` redirection corrupts binary output).
 
 ## Other notes
