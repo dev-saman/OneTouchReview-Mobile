@@ -7,6 +7,9 @@ Read `CLAUDE.md` first (project rules), then `docs/API-GAPS.md` (contract questi
 - **Brand redesign** from the owner's mockups and logo files: teal/gold/navy theme, logo in headers, icon tiles, initials avatars, empty-state icons, new app icon / adaptive icon / notification icon, and the **dark brand splash** (owner's pick of three) as native splash + launch screen.
 - **Mockup screens** applied where the API has the data: raised Send button in the tab bar, sign-in screens, Send "Contact method" (`channel` auto / sms / email), client detail header, My card gradient card (QR with logo), notifications All / Unread with kind icons, Profile & Security, full-screen state icons, Reviews rating summary, chat header. Home quick actions were added and then **removed at the owner's request** (`83e6733`).
 - **Bugs fixed:** double `POST /devices` on every start (`83ea2f7`); review AI drafts never showed (`ai_reply` is an object, not a string — `0ffc197`); **every Reports tab was blank on Android** (custom refreshControl dropped its children — `070816c`); Metro hanging after Android builds (`b5541b6`); **keyboard covering inputs on Android** (`064b982`, same fix as the Stech app — see Gotchas; not yet confirmed on a device).
+- **Google Play release prep** (`0b319cc`): the app exists in Play Console as a **Draft** (`com.onetouchreview.app`). The owner builds the signed bundle in Android Studio. See "Google Play release" below.
+- **Play Store screenshots** (local only, git-ignored `play-store-screenshots/`): 7 of 8 done from the release build. See "Google Play release".
+- **One native crash** (SIGSEGV in React Native's Fabric renderer, `MountingCoordinator::pullTransaction`, at startup in the dev build); not reproducible in 5 cold starts, no code change. See Gotchas.
 - **New API gap #29:** the live API sends six notification kinds the Sheet doesn't list.
 - Lint, typecheck and **147 tests** pass. Everything is pushed; `main` is in sync with GitHub.
 
@@ -87,6 +90,9 @@ UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, Lis
 | `83e6733` | Home quick actions removed (owner) |
 | `73e7d86` `48af9e6` | Handoff update; design rules in CLAUDE.md |
 | `064b982` | **Fix:** keyboard covering inputs on Android (`KeyboardAvoider`) |
+| `4ddd79a` `ff7e8ff` | Handoff + CLAUDE.md keyboard rule |
+| `a39070a` | Git-ignore `play-store-screenshots/` |
+| `0b319cc` | Android release prep: `versionCode` in app.config, SYSTEM_ALERT_WINDOW blocked |
 
 ## Where the response shapes come from
 - The Sheet's Endpoints tab has a **"Response example"** column (column G) for all endpoints, and its Notes now include the API team's answers (e.g. `GET /chat-team`, `assigned_user_id`, Ask AI history). Types in `src/api/types.ts` keep only fields the screens use.
@@ -95,6 +101,7 @@ UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, Lis
 - The build guide (Google Doc) exports as text: `https://docs.google.com/document/d/1VciMlI4NrYcgis-KnXNOqYjhWpglZyVSppm6TDSdhoE/export?format=txt`
 
 ## Gotchas
+- **Native crash at startup (once):** SIGSEGV on the JS thread (`mqt_v_js`) in `facebook::react::MountingCoordinator::pullTransaction`, 0.85 s after "Running main", on the launch screen in the dev build (2026-10-12 15:13). Not reproducible in 5 cold starts; no matching upstream report found; no code change. If it happens again, read `adb logcat -b crash` straight away (it gets cleared), note what was done, and try a release build / `npx expo install --fix`.
 - **Keyboard over inputs on Android** (fixed in `064b982`, same root cause as the Stech app). SDK 57 is edge-to-edge, so Android no longer resizes the window for the keyboard (`adjustResize` is ignored), and `KeyboardAvoidingView` with `behavior` only on iOS rendered a plain View. `src/components/ui/KeyboardAvoider.tsx` uses `behavior="padding"` on both platforms. It also measures its own position on screen (`measureInWindow`) and passes it as `keyboardVerticalOffset`, because `KeyboardAvoidingView` computes the overlap from its frame relative to its *parent* and under-shoots by the header height (this replaced the hard-coded iOS offset of 96). Used by `Screen` (all forms), the chat screen and Ask AI. **Not confirmed yet:** this emulator's Gboard is stuck in floating-toolbar mode and takes no space, so the overlap can't be reproduced here. Check on a physical phone (or a docked keyboard): Send → New client → tap Email, the field must stay above the keyboard; also the chat composer and Ask AI input.
 - **Metro stopped answering after Android builds** (blank app, Metro at 100% CPU, `/status` times out). Gradle writes ~7,000 files under `node_modules/*/android/build`, and without Watchman Metro kept reprocessing them. `metro.config.js` now block-lists native build output; after a full `prebuild --clean` + build, Metro kept answering. Metro still sits at ~100% of one core while running in the background, but stays responsive. If it hangs anyway: stop it and run `npx expo start --dev-client`.
 - **Don't let the app connect to `192.168.1.108:8081`.** `expo run:android` opens the dev client with the PC's Wi-Fi address, which this PC blocks (likely Windows Firewall), so the app stays blank. Use the adb tunnel instead: `adb reverse tcp:8081 tcp:8081`, then open `exp+onetouchreview://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081` once; later icon launches remember it.
@@ -106,6 +113,15 @@ UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, Lis
 - **Route types lag behind new files.** If typecheck rejects a new route, touch the file (or reload the app) so Metro regenerates `.expo/types/router.d.ts`.
 - **Android push permission:** "never asked" reports as `denied` + `canAskAgain: true` (iOS reports `undetermined`). PushManager asks when not granted and `canAskAgain`.
 - **ESLint React Compiler rules:** don't call a function that sets state at the top of an effect (start the request, set state in `.then`), and don't read `ref.current` during render (use `useState(() => new Animated.Value(0))` instead of `useRef(...).current`).
+
+## Google Play release
+- **Play Console:** app `com.onetouchreview.app` created, status **Draft**, nothing uploaded yet (as of 2026-10-12).
+- **Checked on the release APK** (`aapt2 dump badging`): package `com.onetouchreview.app`, `versionCode` 1 / `versionName` 1.0.0, target SDK 36 (Play needs ≥ 35), no CAMERA / RECORD_AUDIO, storage permissions only up to Android 12 (`maxSdkVersion 32`). SYSTEM_ALERT_WINDOW is now blocked (`android.blockedPermissions`). Remaining permissions come from libraries (push, badges, NetInfo, SecureStore's biometric entries — the app doesn't use biometrics).
+- **Version:** `android.versionCode` lives in `app.config.ts` (never edit it in `android/`, prebuild overwrites it). **Bump it for every Play upload**; bump `version` for user-visible releases.
+- **Signing:** the generated `build.gradle` signs release with the **debug keystore**, which Play rejects. The owner builds with Android Studio → open `android/` → Build → **Generate Signed App Bundle** (`.aab`) → create/choose the **upload key**, stored **outside the repo** (e.g. `D:\keys\onetouchreview-upload.jks`) and backed up with its passwords → release variant. The wizard's signing overrides the debug config. Keep **Play App Signing** on. Never commit a keystore (`*.keystore` is git-ignored; also keep `.jks` out).
+- **Before every build:** after any change to `app.config.ts`, icons, splash or native deps run `npx expo prebuild --platform android --clean`, then build in Android Studio. The upload key is safe because it lives outside the project.
+- **Release build on the emulator:** `npx expo run:android --variant release --no-bundler` (~16 min the first time). It replaced the dev build on the emulator on 2026-10-12; reinstall the dev build with `npx expo run:android` before developing.
+- **Store screenshots** (`play-store-screenshots/`, git-ignored, 1080×1920 — Play rejects the emulator's 1080×2400 because the long side may be at most twice the short side): `01-splash`, `02-sign-in`, `03-sign-in-password`, `04-dashboard`, `05-chats`, `06-notifications`, `07-more`. Taken from the release build (no dev Tools button). The owner's account manages several real businesses, so data screens were captured with the owner's own "One Touch Review" location selected (dashboard all zeros, no chats), notifications cut after the 4th item (later items name other businesses' pages), and the location restored afterwards. **Choose location is not included** (it lists other customers). `07-more` shows the owner's company email — owner's call before uploading. Re-take all data screens on the test business once its login exists. Crop helper: top of screen + real tab bar (keep ~70 px above the bar so the raised Send button isn't clipped).
 
 ## Verified on the Android emulator (Medium_Phone_API_36)
 - Earlier: startup, sign-in, Home, Clients, Send form, bell count, More, Profile, Signed-in devices, My card, Edit card (nothing saved), push prompt.
@@ -127,11 +143,11 @@ UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, Lis
 - Ask AI links open the **web app** at the given path (billing-like paths dropped): no mapping from web paths to app screens is documented.
 
 ## Next steps
-1. Get the test-business owner + staff logins (the Sheet's "Start here" still says they're coming). Remove the emulator from the real account and sign it out.
+1. Get the test-business owner + staff logins (the Sheet's "Start here" still says they're coming). The emulator is still signed in to the owner's account, which manages several **real** businesses — the owner's sign-ins so far all opened that account. With the test login: re-take the store screenshots (incl. Choose location) and do the checks below.
 2. Go screen by screen on the test business against the Sheet's **Screen checklist** tab, including today's work: Send (phone + consent, email-only, each Contact method), Resend, client detail, chat reply + Assign, feedback (Urgent badge), reviews reply + AI draft, Ask AI follow-ups and links, card edit (do **not** fill the card address), push (allow → trigger → tap), owner vs staff, Austin/Dallas, 401, offline; and the sign-in and state screens in their new look.
 3. Real Android phone (NFC writing, push, **scan the QR with the logo**, **keyboard stays clear of inputs** on Send, profile forms, chat and Ask AI) and the iPhone dev build (owner: `npx eas-cli login`, `npx eas-cli init`, `npx eas-cli device:create`, EAS file env vars — see README). Check the app icon and splash on the iPhone.
 4. Ask for `POST /broadcasting/auth` and `PUT /digital-cards/slug` to be added to the Sheet, and for the six notification kinds in #29 to be documented; get the owner's OK for Firebase Messaging on iOS.
-5. TestFlight and Play internal testing.
+5. **Google Play:** owner builds the signed `.aab` in Android Studio with the upload key and uploads it to **internal testing** first; fill in the store listing (screenshots in `play-store-screenshots/`), data safety form and content rating. Then TestFlight for iOS.
 6. Owner fills the Sheet's "Done (date)" column (Claude has view-only access).
 
 ## Running locally
