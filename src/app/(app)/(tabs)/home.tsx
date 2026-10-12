@@ -7,7 +7,6 @@ import { dashboardApi } from '@/api/dashboard.api';
 import { Card, InfoRow } from '@/components/ui/Card';
 import { IconTile, type IconName, type TileTone } from '@/components/ui/IconTile';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
-import { can } from '@/config/permissions';
 import { colors, font, radius, shadow, spacing } from '@/constants/theme';
 import { RequestRow } from '@/features/clients/RequestRow';
 import { selectSelectedLocation } from '@/features/location/selectors';
@@ -70,8 +69,6 @@ function Dashboard({ location }: { location: LocationSelection }) {
       </View>
 
       <ProfileBanners />
-
-      <QuickActions />
 
       {urgent > 0 ? (
         <Pressable
@@ -154,37 +151,6 @@ function Dashboard({ location }: { location: LocationSelection }) {
   );
 }
 
-/** Shortcuts to the screens people use most. Ask AI only for the roles that have it. */
-function QuickActions() {
-  const router = useRouter();
-  const role = useAppSelector((s) => s.auth.user?.role);
-  const actions: { icon: IconName; tone: TileTone; label: string; onPress: () => void }[] = [
-    { icon: 'paper-plane', tone: 'brand', label: 'Send request', onPress: () => router.navigate('/send') },
-    { icon: 'star', tone: 'accent', label: 'Reviews', onPress: () => router.push('/reviews') },
-    { icon: 'qr-code', tone: 'brand', label: 'My card', onPress: () => router.push('/card') },
-    can(role, 'askAi')
-      ? { icon: 'sparkles', tone: 'info', label: 'Ask AI', onPress: () => router.push('/ask-ai') }
-      : { icon: 'chatbox-ellipses', tone: 'info', label: 'Feedback', onPress: () => router.push('/feedback') },
-  ];
-  return (
-    <View style={styles.actions}>
-      {actions.map((a) => (
-        <Pressable
-          key={a.label}
-          onPress={a.onPress}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
-        >
-          <IconTile name={a.icon} tone={a.tone} size={44} />
-          <Text style={styles.actionLabel} numberOfLines={2}>
-            {a.label}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
-
 function withPrevious(current: number, previous: number) {
   return `${current} (before: ${previous})`;
 }
@@ -219,19 +185,6 @@ function Stat({
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   hello: { gap: spacing.xs, marginTop: spacing.xs },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  action: {
-    flex: 1,
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadow,
-  },
-  actionLabel: { fontSize: 12, fontWeight: '600', color: colors.text, textAlign: 'center' },
   urgent: {
     flexDirection: 'row',
     alignItems: 'center',
