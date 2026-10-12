@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View, type RefreshControlProps } from 'react-native';
 
 import { reportsApi } from '@/api/reports.api';
 import type { InsightLocation, OwnerReport, ReportFrequency, ReviewPointStat, Sentiment } from '@/api/types';
@@ -291,8 +291,12 @@ function TrendLine({ label, items }: { label: string; items: { id: number; name:
   return <InfoRow label={label} value={items.map((i) => i.name).join(', ')} />;
 }
 
-function Refresh({ q }: { q: { refreshing: boolean; refresh: () => void } }) {
-  return <RefreshControl refreshing={q.refreshing} onRefresh={q.refresh} tintColor={colors.primary} />;
+/**
+ * On Android the ScrollView passes its content to the refresh control as children (and a style),
+ * so they must be forwarded or the screen renders empty.
+ */
+function Refresh({ q, ...rest }: { q: { refreshing: boolean; refresh: () => void } } & Partial<RefreshControlProps>) {
+  return <RefreshControl {...rest} refreshing={q.refreshing} onRefresh={q.refresh} tintColor={colors.primary} />;
 }
 
 const styles = StyleSheet.create({
