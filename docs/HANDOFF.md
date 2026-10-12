@@ -6,6 +6,7 @@ Read `CLAUDE.md` first (project rules), then `docs/API-GAPS.md` (contract questi
 - **2026-10-08:** the API team answered almost every API-GAPS question (doc "OneTouchReview mobile app — answers to open API questions"). Recorded in `docs/API-GAPS.md` (`2bc4841`). See "API questions" below for what that unblocks.
 - **2026-10-12:** fixed the double `POST /devices` on every start (`83ea2f7`, see Gotchas). 130 tests pass.
 - **2026-10-12:** brand redesign from the owner's mockups and logo files: teal/gold theme, logo in headers, icon tiles, avatars, empty-state icons, new app icon / adaptive icon / notification icon / splash, and a branded launch screen while startup runs. Mockup parts without API data (charts, call buttons, list counts) and a dark mode were left out on purpose.
+- **2026-10-12:** the launch screen is now the dark brand splash (owner's choice of the three mockups); native splash background `#0A2A3A`.
 - **2026-10-12:** the emulator showed only the splash screen while the app ran fine underneath (the system splash layer's exit animation was stuck). A cold boot fixed it — not an app bug. See "Running locally".
 
 ## Status in one paragraph
@@ -64,6 +65,8 @@ Shared building blocks: `useApiQuery(key, fetcher)` (keyed loads, stale requests
 - The build guide (Google Doc) exports as text: `https://docs.google.com/document/d/1VciMlI4NrYcgis-KnXNOqYjhWpglZyVSppm6TDSdhoE/export?format=txt`
 
 ## Gotchas
+- **Metro stopped answering after Android builds** (blank app, Metro at 100% CPU, `/status` times out). Gradle writes ~7,000 files under `node_modules/*/android/build`, and without Watchman Metro kept reprocessing them. `metro.config.js` now block-lists native build output (2026-10-12); after a full `prebuild --clean` + build, Metro kept answering. If it hangs anyway: stop it and run `npx expo start --dev-client`.
+- **Don't let the app connect to `192.168.1.108:8081`.** `expo run:android` opens the dev client with the PC's Wi-Fi address, which this PC blocks (likely Windows Firewall), so the app stays blank. Use the adb tunnel instead: `adb reverse tcp:8081 tcp:8081`, then open `exp+onetouchreview://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081` once; later icon launches remember it.
 - **`expo run:android` reuses an existing `android/` folder**, so changes to icons, splash, colours or `app.config.ts` don't reach the build (2026-10-12: the notification colour stayed the old blue). Regenerate first with `npx expo prebuild --platform android --clean` (safe: `android/` is generated and gitignored), then `npx expo run:android --no-bundler`.
 - **Push token fired twice:** in expo-notifications, fetching the device token also fires the token-change listener with the same token. `registerDevice()` skips a token already registered or in flight, retries after a failure and resets when PushManager unmounts on sign-out.
 - **Expo Router index routes:** the generated types name `folder/index.tsx` as `/folder/index`, which does **not** resolve at runtime ("Unmatched Route"). Use `folder.tsx` next to `folder/` instead (as `profile.tsx`, `feedback.tsx`, `reviews.tsx`, `card.tsx` do).
