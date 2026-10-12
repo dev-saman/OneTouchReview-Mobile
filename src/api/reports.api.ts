@@ -2,7 +2,7 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 
 import { network } from './network';
 import { Paths } from './paths';
-import type { AiAnswer, Insights, OwnerReport, ReportFrequency, ReviewPoints } from './types';
+import type { AiAnswer, AiHistoryTurn, Insights, OwnerReport, ReportFrequency, ReviewPoints } from './types';
 
 /** Endpoints tab, rows "12 Reports". location_id as the other screens (answers echo it). */
 export const reportsApi = {
@@ -25,9 +25,6 @@ export const aiApi = {
   suggestions: (signal?: AbortSignal) =>
     network.get<{ suggestions: string[]; asks_left_today: number; daily_limit: number }>(Paths.aiAskSuggestions, { signal }),
 
-  /**
-   * "Keep the last 6 turns as history": the turn format isn't in the Sheet yet (docs/API-GAPS.md #27),
-   * so history is sent empty until it is.
-   */
-  ask: (question: string) => network.post<AiAnswer>(Paths.aiAsk, { question, history: [] }),
+  /** history: the last 6 turns as { role: user | assistant, content } (API-GAPS #27). */
+  ask: (question: string, history: AiHistoryTurn[]) => network.post<AiAnswer>(Paths.aiAsk, { question, history }),
 };

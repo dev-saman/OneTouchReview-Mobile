@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,14 +9,22 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { can } from '@/config/permissions';
 import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
+import { buildHistory, usableLinks } from '@/features/askAi/history';
 import { textOrNull } from '@/features/chats/format';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
+import { openWebApp } from '@/services/web/openWebApp';
 import { useAppSelector } from '@/store/hooks';
 
-type Turn = { id: number; question: string; answer: string | null; error: ApiError | null };
+type Turn = {
+  id: number;
+  question: string;
+  answer: string | null;
+  links: { label: string; path: string }[];
+  error: ApiError | null;
+};
 
 const textItems = (items: unknown[] | undefined) =>
-  (items ?? []).filter((i): i is string => typeof i === 'string' && !!i.trim());
+  (items ?? []).filter((i): i is string => typeof i === 'string' && !!i.trim()).slice(0, 3);
 
 /** Screen 12: Ask AI — answers questions about the business's own data. Owners and managers. */
 export default function AskAiScreen() {
@@ -54,13 +63,16 @@ function Conversation({ starters, initialLeft }: { starters: string[]; initialLe
     const q = question.trim();
     if (!q || asking || asksLeft <= 0) return;
     const id = nextId.current++;
-    setTurns((t) => [...t, { id, question: q, answer: null, error: null }]);
+    const history = buildHistory(turns);
+    setTurns((t) => [...t, { id, question: q, answer: null, links: [], error: null }]);
     setText('');
     setFollowUps([]);
     setAsking(true);
     try {
-      const answer = await aiApi.ask(q);
-      setTurns((t) => t.map((turn) => (turn.id === id ? { ...turn, answer: answer.answer } : turn)));
+      const answer = await aiApi.ask(q, history);
+      setTurns((t) =>
+        t.map((turn) => (turn.id === id ? { ...turn, answer: answer.answer, links: usableLinks(answer.links) } : turn)),
+      );
       setFollowUps(textItems(answer.follow_ups));
       setAsksLeft(answer.asks_left_today);
     } catch (e) {
@@ -99,9 +111,23 @@ function Conversation({ starters, initialLeft }: { starters: string[]; initialLe
               </View>
               <View style={[styles.bubble, styles.answer]}>
                 {turn.answer ? (
-                  <Text style={font.body} selectable>
-                    {turn.answer}
-                  </Text>
+                  <>
+                    <Text style={font.body} selectable>
+                      {turn.answer}
+                    </Text>
+                    {turn.links.map((link) => (
+                      <Pressable
+                        key={link.path}
+                        onPress={() => openWebApp(link.path)}
+                        accessibilityRole="link"
+                        accessibilityHint="Opens OneTouchReview on the web"
+                        style={styles.link}
+                      >
+                        <Ionicons name="open-outline" size={16} color={colors.primary} />
+                        <Text style={styles.linkText}>{link.label}</Text>
+                      </Pressable>
+                    ))}
+                  </>
                 ) : turn.error ? (
                   <Text style={styles.error}>{turn.error.message}</Text>
                 ) : (
@@ -155,6 +181,8 @@ const styles = StyleSheet.create({
   questionText: { fontSize: 16, color: colors.onPrimary },
   answer: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   error: { color: colors.danger, fontSize: 14 },
+  link: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 36 },
+  linkText: { fontSize: 15, fontWeight: '600', color: colors.primary },
   chips: { gap: spacing.sm },
   chip: {
     alignSelf: 'flex-start',

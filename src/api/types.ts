@@ -455,10 +455,17 @@ export type OwnerReport = {
   quiet: boolean;
 };
 
+/** POST /ai/ask history turn (API-GAPS #27). */
+export type AiHistoryTurn = { role: 'user' | 'assistant'; content: string };
+
 export type AiAnswer = {
   answer: string;
-  /** Shape not documented (empty in the example): only text follow-ups are shown. */
-  follow_ups: unknown[];
+  /** Web-app paths, up to 4 (API-GAPS #27). */
+  links: { label: string; path: string }[];
+  /** Up to 3 suggested next questions. */
+  follow_ups: string[];
+  /** Data tool names; display / debug only, not used by the app. */
+  used: string[];
   asks_left_today: number;
 };
 

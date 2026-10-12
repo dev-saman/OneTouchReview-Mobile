@@ -20,7 +20,7 @@ export default function FinishOnWebScreen() {
           then sign in here.
         </Text>
       </View>
-      <Button title="Open OneTouchReview on the web" onPress={openWebApp} icon="open-outline" />
+      <Button title="Open OneTouchReview on the web" onPress={() => openWebApp()} icon="open-outline" />
       <Button title="Back to sign in" variant="text" onPress={() => router.dismissTo('/sign-in')} />
     </Screen>
   );

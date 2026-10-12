@@ -76,7 +76,7 @@ function NotificationsList({ location }: { location: LocationSelection }) {
       case 'webOnly':
         Alert.alert(n.title, [n.body, WEB_MESSAGE].filter(Boolean).join('\n\n'), [
           { text: 'Close', style: 'cancel' },
-          { text: 'Open on the web', onPress: openWebApp },
+          { text: 'Open on the web', onPress: () => openWebApp() },
         ]);
         return;
       case 'messageOnly':
