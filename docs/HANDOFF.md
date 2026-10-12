@@ -6,7 +6,7 @@ Read `CLAUDE.md` first (project rules), then `docs/API-GAPS.md` (contract questi
 - **API answers built.** The API team answered almost every API-GAPS question on 2026-10-08 (recorded in `2bc4841`). All eight "ready to build" items are in: #11, #13, #18, #21, #22, #23, #27, #28 (one commit each, see Done).
 - **Brand redesign** from the owner's mockups and logo files: teal/gold/navy theme, logo in headers, icon tiles, initials avatars, empty-state icons, new app icon / adaptive icon / notification icon, and the **dark brand splash** (owner's pick of three) as native splash + launch screen.
 - **Mockup screens** applied where the API has the data: raised Send button in the tab bar, sign-in screens, Send "Contact method" (`channel` auto / sms / email), client detail header, My card gradient card (QR with logo), notifications All / Unread with kind icons, Profile & Security, full-screen state icons, Reviews rating summary, chat header. Home quick actions were added and then **removed at the owner's request** (`83e6733`).
-- **Bugs fixed:** double `POST /devices` on every start (`83ea2f7`); review AI drafts never showed (`ai_reply` is an object, not a string — `0ffc197`); **every Reports tab was blank on Android** (custom refreshControl dropped its children — `070816c`); Metro hanging after Android builds (`b5541b6`).
+- **Bugs fixed:** double `POST /devices` on every start (`83ea2f7`); review AI drafts never showed (`ai_reply` is an object, not a string — `0ffc197`); **every Reports tab was blank on Android** (custom refreshControl dropped its children — `070816c`); Metro hanging after Android builds (`b5541b6`); **keyboard covering inputs on Android** (`064b982`, same fix as the Stech app — see Gotchas; not yet confirmed on a device).
 - **New API gap #29:** the live API sends six notification kinds the Sheet doesn't list.
 - Lint, typecheck and **147 tests** pass. Everything is pushed; `main` is in sync with GitHub.
 
@@ -26,7 +26,7 @@ Every screen in the build guide (Version 2) exists in code and now carries the b
 - The owner asks for a build step, then a commit and push after each one.
 
 ## Repository
-- GitHub: https://github.com/dev-saman/OneTouchReview-Mobile (**public**), branch `main`, pushed and in sync (last commit `83e6733`).
+- GitHub: https://github.com/dev-saman/OneTouchReview-Mobile (**public**), branch `main`, pushed and in sync.
 - Because it's public: **never put real business, client or person names in code, tests, docs or commit messages.** History was rewritten and force-pushed twice on 2026-10-07 to remove real business names; no real names remain anywhere in history (checked with `git log --all -S <name>`). The mockups the owner shares contain real names — don't copy them into anything.
 - Commit `825d096`'s message starts with an invisible BOM (written with PowerShell `Set-Content -Encoding utf8`). Cosmetic; left as is. Write commit message files with the editor tool and `git commit -F`, never `-m` with quotes and never `Set-Content`.
 
@@ -38,7 +38,7 @@ One module owns each sensitive dependency:
 
 Shared building blocks: `useApiQuery(key, fetcher)` (keyed loads, stale requests cancelled), `usePagedList` (page numbers or `next_cursor`), `useRefreshOnFocus`, `useDebouncedValue`, `utils/format.ts` (incl. `initials`, `greeting`), `services/web/openWebApp.ts` (web app home or a safe path; never billing).
 
-UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, ListFooter, TextField (eye toggle, optional leading `icon`), Button (optional `icon`), **Avatar** (initials), **IconTile** (tinted icon square, tones brand / accent / info / danger), **Brand** (BrandMark, BrandLogo, BrandWordmark, BrandWordmarkLight with `allWhite`), **AuthHeader** + OrDivider (centred header for sign-in and state screens, `tone`), **LaunchScreen** (`LAUNCH_COLORS`), EmptyState (optional `icon`). Theme tokens in `src/constants/theme.ts` (`colors`, `radius`, `shadow`).
+UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, ListFooter, TextField (eye toggle, optional leading `icon`), Button (optional `icon`), **Avatar** (initials), **IconTile** (tinted icon square, tones brand / accent / info / danger), **Brand** (BrandMark, BrandLogo, BrandWordmark, BrandWordmarkLight with `allWhite`), **AuthHeader** + OrDivider (centred header for sign-in and state screens, `tone`), **LaunchScreen** (`LAUNCH_COLORS`), **KeyboardAvoider** (use it for anything with text inputs, never a bare `KeyboardAvoidingView`), EmptyState (optional `icon`). Theme tokens in `src/constants/theme.ts` (`colors`, `radius`, `shadow`).
 
 ## Done (commits on `main`, oldest first)
 | Commit | What |
@@ -85,6 +85,8 @@ UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, Lis
 | `9c6f6d1` | Reviews rating summary |
 | `0006108` | Chat header with avatar, name and channel |
 | `83e6733` | Home quick actions removed (owner) |
+| `73e7d86` `48af9e6` | Handoff update; design rules in CLAUDE.md |
+| `064b982` | **Fix:** keyboard covering inputs on Android (`KeyboardAvoider`) |
 
 ## Where the response shapes come from
 - The Sheet's Endpoints tab has a **"Response example"** column (column G) for all endpoints, and its Notes now include the API team's answers (e.g. `GET /chat-team`, `assigned_user_id`, Ask AI history). Types in `src/api/types.ts` keep only fields the screens use.
@@ -93,6 +95,7 @@ UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, Lis
 - The build guide (Google Doc) exports as text: `https://docs.google.com/document/d/1VciMlI4NrYcgis-KnXNOqYjhWpglZyVSppm6TDSdhoE/export?format=txt`
 
 ## Gotchas
+- **Keyboard over inputs on Android** (fixed in `064b982`, same root cause as the Stech app). SDK 57 is edge-to-edge, so Android no longer resizes the window for the keyboard (`adjustResize` is ignored), and `KeyboardAvoidingView` with `behavior` only on iOS rendered a plain View. `src/components/ui/KeyboardAvoider.tsx` uses `behavior="padding"` on both platforms. It also measures its own position on screen (`measureInWindow`) and passes it as `keyboardVerticalOffset`, because `KeyboardAvoidingView` computes the overlap from its frame relative to its *parent* and under-shoots by the header height (this replaced the hard-coded iOS offset of 96). Used by `Screen` (all forms), the chat screen and Ask AI. **Not confirmed yet:** this emulator's Gboard is stuck in floating-toolbar mode and takes no space, so the overlap can't be reproduced here. Check on a physical phone (or a docked keyboard): Send → New client → tap Email, the field must stay above the keyboard; also the chat composer and Ask AI input.
 - **Metro stopped answering after Android builds** (blank app, Metro at 100% CPU, `/status` times out). Gradle writes ~7,000 files under `node_modules/*/android/build`, and without Watchman Metro kept reprocessing them. `metro.config.js` now block-lists native build output; after a full `prebuild --clean` + build, Metro kept answering. Metro still sits at ~100% of one core while running in the background, but stays responsive. If it hangs anyway: stop it and run `npx expo start --dev-client`.
 - **Don't let the app connect to `192.168.1.108:8081`.** `expo run:android` opens the dev client with the PC's Wi-Fi address, which this PC blocks (likely Windows Firewall), so the app stays blank. Use the adb tunnel instead: `adb reverse tcp:8081 tcp:8081`, then open `exp+onetouchreview://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081` once; later icon launches remember it.
 - **`expo run:android` reuses an existing `android/` folder**, so changes to icons, splash, colours or `app.config.ts` don't reach the build. Regenerate first with `npx expo prebuild --platform android --clean` (safe: `android/` is generated and gitignored), then `npx expo run:android --no-bundler`.
@@ -107,7 +110,7 @@ UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, Lis
 ## Verified on the Android emulator (Medium_Phone_API_36)
 - Earlier: startup, sign-in, Home, Clients, Send form, bell count, More, Profile, Signed-in devices, My card, Edit card (nothing saved), push prompt.
 - 2026-10-12, read-only: native dark splash + launch screen, app icon in the drawer (fits the round mask), Home (greeting, stat tiles), tab bar with raised Send, Clients with avatars, client detail header, Send with Contact method (sample data typed, **nothing sent**), Chats list, More, Profile & Security, My card gradient card, Reviews filters + rating summary, Reports (all tabs, after the fix), notifications All / Unread.
-- **Not verified yet:** sign-in screens and full-screen states in their new look (need signing out), chat screen header and Assign (opening a chat marks it read), Ask AI history and links, urgent feedback badge with data, Send for real (incl. the chosen channel), Resend, replies, photo upload, **QR with logo scanning on a real phone**, NFC writing, push delivery and taps, owner vs staff, Austin/Dallas switching, 401 → sign-in, offline/5xx keeps the session.
+- **Not verified yet:** the keyboard fix (emulator keyboard can't reproduce it), sign-in screens and full-screen states in their new look (need signing out), chat screen header and Assign (opening a chat marks it read), Ask AI history and links, urgent feedback badge with data, Send for real (incl. the chosen channel), Resend, replies, photo upload, **QR with logo scanning on a real phone**, NFC writing, push delivery and taps, owner vs staff, Austin/Dallas switching, 401 → sign-in, offline/5xx keeps the session.
 - ⚠️ The emulator is still signed in to a **real customer business**, not the test business, and is registered for push on that account. Remove it under Profile → Signed-in devices (or sign out), and use only the "OneTouchReview Mobile Test" (business 99) logins. Never send, resend, reply, post, edit cards, assign, ask AI or open chats on a real business.
 
 ## API questions
@@ -126,7 +129,7 @@ UI kit (`src/components/ui/`): Card, Badge, InfoRow, Chips, Stars, Checkbox, Lis
 ## Next steps
 1. Get the test-business owner + staff logins (the Sheet's "Start here" still says they're coming). Remove the emulator from the real account and sign it out.
 2. Go screen by screen on the test business against the Sheet's **Screen checklist** tab, including today's work: Send (phone + consent, email-only, each Contact method), Resend, client detail, chat reply + Assign, feedback (Urgent badge), reviews reply + AI draft, Ask AI follow-ups and links, card edit (do **not** fill the card address), push (allow → trigger → tap), owner vs staff, Austin/Dallas, 401, offline; and the sign-in and state screens in their new look.
-3. Real Android phone (NFC writing, push, **scan the QR with the logo**) and the iPhone dev build (owner: `npx eas-cli login`, `npx eas-cli init`, `npx eas-cli device:create`, EAS file env vars — see README). Check the app icon and splash on the iPhone.
+3. Real Android phone (NFC writing, push, **scan the QR with the logo**, **keyboard stays clear of inputs** on Send, profile forms, chat and Ask AI) and the iPhone dev build (owner: `npx eas-cli login`, `npx eas-cli init`, `npx eas-cli device:create`, EAS file env vars — see README). Check the app icon and splash on the iPhone.
 4. Ask for `POST /broadcasting/auth` and `PUT /digital-cards/slug` to be added to the Sheet, and for the six notification kinds in #29 to be documented; get the owner's OK for Firebase Messaging on iOS.
 5. TestFlight and Play internal testing.
 6. Owner fills the Sheet's "Done (date)" column (Claude has view-only access).
