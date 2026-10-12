@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { StyleSheet, Text, View, type ColorValue } from 'react-native';
 
 import { BrandMark } from '@/components/ui/Brand';
-import { colors, spacing } from '@/constants/theme';
+import { colors, shadow, spacing } from '@/constants/theme';
 import { LocationButton } from '@/features/location/LocationButton';
 import { BellButton } from '@/features/notifications/BellButton';
 
@@ -15,6 +15,15 @@ function icon(name: IconName, focusedName: IconName) {
   return function TabIcon({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) {
     return <Ionicons name={focused ? focusedName : name} color={color} size={size} />;
   };
+}
+
+/** The Send tab: a raised teal button in the middle of the tab bar. */
+function SendTabIcon({ focused }: { focused: boolean }) {
+  return (
+    <View style={[styles.sendButton, focused && styles.sendButtonFocused]}>
+      <Ionicons name="paper-plane" size={24} color={colors.onPrimary} />
+    </View>
+  );
 }
 
 /** Brand mark next to the tab's title. */
@@ -57,7 +66,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
       <Tabs.Screen name="clients" options={{ title: 'Clients', tabBarIcon: icon('people-outline', 'people') }} />
-      <Tabs.Screen name="send" options={{ title: 'Send', tabBarIcon: icon('paper-plane-outline', 'paper-plane') }} />
+      <Tabs.Screen name="send" options={{ title: 'Send', tabBarIcon: SendTabIcon }} />
       <Tabs.Screen name="chats" options={{ title: 'Chats', tabBarIcon: icon('chatbubbles-outline', 'chatbubbles') }} />
       <Tabs.Screen
         name="more"
@@ -74,4 +83,17 @@ const styles = StyleSheet.create({
   tabBar: { backgroundColor: colors.surface, borderTopColor: colors.border },
   tabLabel: { fontSize: 11, fontWeight: '600' },
   headerActions: { flexDirection: 'row', alignItems: 'center', marginRight: spacing.xs },
+  sendButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginTop: -22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderWidth: 4,
+    borderColor: colors.surface,
+    ...shadow,
+  },
+  sendButtonFocused: { backgroundColor: colors.primaryPressed },
 });
