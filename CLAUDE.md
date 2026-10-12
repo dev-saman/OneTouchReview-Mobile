@@ -24,6 +24,7 @@ React Native + Expo (TypeScript) app for OneTouchReview business owners and staf
 - Redux Toolkit holds global state only (session, auth, appConfig, location, network). Screen data lives in screen hooks/local state.
 - NetInfo feeds `network.setOnline` and the `network` slice.
 - No cached `/app-config` and no cached identity: a cold start that can't reach the API shows Retry. Once booted, losing connection never signs out.
+- Keyboard: any screen with text inputs uses `Screen` or `src/components/ui/KeyboardAvoider.tsx`, never a bare `KeyboardAvoidingView` and never an iOS-only `behavior` or a hard-coded offset. Android (SDK 57) is edge-to-edge and doesn't resize for the keyboard; KeyboardAvoider pads on both platforms and measures its own header offset. Check keyboard changes on a physical phone (the emulator's floating Gboard can't reproduce the overlap).
 
 ### Errors and session
 - Errors are `{ error: { code, message, details } }`: show `message`, branch on `code` (never on message text).
