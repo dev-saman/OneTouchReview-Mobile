@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { Customer } from '@/api/types';
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Card';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
@@ -20,7 +21,13 @@ import { formatPhone, formatRating } from '@/utils/format';
 export default function ClientsScreen() {
   const location = useAppSelector(selectSelectedLocation);
   if (location === null) {
-    return <EmptyState title="No locations yet" message="Add a location on the web to see your clients here." />;
+    return (
+      <EmptyState
+        icon="location-outline"
+        title="No locations yet"
+        message="Add a location on the web to see your clients here."
+      />
+    );
   }
   return <ClientsList location={location} />;
 }
@@ -48,10 +55,10 @@ function ClientsList({ location }: { location: LocationSelection }) {
   useRefreshOnFocus(list.refresh);
 
   const empty = search
-    ? { title: 'No matches', message: 'Try a different name, phone or email.' }
+    ? { icon: 'search-outline' as const, title: 'No matches', message: 'Try a different name, phone or email.' }
     : notSent
-      ? { title: 'Nothing here', message: 'No clients with a request that was not sent.' }
-      : { title: 'No clients yet', message: 'Clients appear here after you send them a review request.' };
+      ? { icon: 'checkmark-circle-outline' as const, title: 'Nothing here', message: 'No clients with a request that was not sent.' }
+      : { icon: 'people-outline' as const, title: 'No clients yet', message: 'Clients appear here after you send them a review request.' };
 
   return (
     <View style={styles.screen}>
@@ -93,7 +100,7 @@ function ClientsList({ location }: { location: LocationSelection }) {
           renderItem={({ item }) => <ClientRow customer={item} onPress={() => router.push({ pathname: '/client/[id]', params: { id: String(item.id) } })} />}
           ItemSeparatorComponent={Separator}
           contentContainerStyle={list.items.length ? undefined : styles.emptyContainer}
-          ListEmptyComponent={<EmptyState title={empty.title} message={empty.message} />}
+          ListEmptyComponent={<EmptyState icon={empty.icon} title={empty.title} message={empty.message} />}
           onEndReached={list.loadMore}
           onEndReachedThreshold={0.5}
           refreshControl={
@@ -135,6 +142,7 @@ function ClientRow({ customer, onPress }: { customer: Customer; onPress: () => v
   const rating = customer.latest_response?.rating;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+      <Avatar name={customer.name} />
       <View style={styles.rowMain}>
         <Text style={styles.name}>{customer.name}</Text>
         {contact ? <Text style={font.small}>{contact}</Text> : null}
@@ -145,7 +153,7 @@ function ClientRow({ customer, onPress }: { customer: Customer; onPress: () => v
       </View>
       {rating !== null && rating !== undefined ? (
         <View style={styles.rating} accessibilityLabel={`Rated ${formatRating(rating)} out of 5`}>
-          <Ionicons name="star" size={14} color={colors.warning} />
+          <Ionicons name="star" size={14} color={colors.accent} />
           <Text style={styles.ratingText}>{formatRating(rating)}</Text>
         </View>
       ) : null}
@@ -167,7 +175,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     minHeight: touchTarget,
     paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.background,
@@ -201,7 +209,7 @@ const styles = StyleSheet.create({
   rowMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
   rating: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   ratingText: { fontSize: 14, fontWeight: '600', color: colors.text },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: spacing.lg },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: spacing.lg + 44 + spacing.md },
   emptyContainer: { flexGrow: 1 },
   footer: { padding: spacing.lg, gap: spacing.sm },
   center: { textAlign: 'center' },

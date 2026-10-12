@@ -10,7 +10,7 @@ export function Stars({ rating, size = 16 }: { rating: number | null | undefined
   return (
     <View style={styles.row} accessible accessibilityLabel={`${value} out of 5 stars`}>
       {Array.from({ length: 5 }, (_, i) => (
-        <Ionicons key={i} name={i < value ? 'star' : 'star-outline'} size={size} color={i < value ? colors.warning : colors.textSubtle} />
+        <Ionicons key={i} name={i < value ? 'star' : 'star-outline'} size={size} color={i < value ? colors.accent : colors.textSubtle} />
       ))}
     </View>
   );

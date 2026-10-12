@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { Customer } from '@/api/types';
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
 import { useClientsList } from '@/features/clients/useClientsList';
@@ -54,6 +55,7 @@ export function ClientSearch({ location, onPick }: { location: LocationSelection
               accessibilityHint="Chooses this client"
               style={({ pressed }) => [styles.row, pressed && styles.pressed]}
             >
+              <Avatar name={c.name} size={40} />
               <View style={styles.rowText}>
                 <Text style={styles.name}>{c.name}</Text>
                 <Text style={font.small}>{formatPhone(c.phone) || c.email}</Text>
@@ -97,7 +99,9 @@ const styles = StyleSheet.create({
     minHeight: touchTarget + 8,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.md,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },

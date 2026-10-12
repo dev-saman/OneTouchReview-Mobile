@@ -1,13 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useCallback, type ComponentProps } from 'react';
+import { useCallback } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { aiApi } from '@/api/reports.api';
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { IconTile, type IconName } from '@/components/ui/IconTile';
 import { Screen } from '@/components/ui/Screen';
 import { can, ROLE_LABELS } from '@/config/permissions';
-import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
+import { colors, font, radius, shadow, spacing, touchTarget } from '@/constants/theme';
 import { signOut } from '@/features/session/sessionThunks';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { appVersion } from '@/services/device/deviceInfo';
@@ -43,10 +45,19 @@ export default function MoreScreen() {
         accessibilityHint="Opens your profile and sign-in options"
         style={({ pressed }) => [styles.card, styles.profile, pressed && styles.pressed]}
       >
+        <Avatar name={user?.name} size={56} solid />
         <View style={styles.profileText}>
           <Text style={font.heading}>{user?.name ?? 'Profile'}</Text>
-          {user ? <Text style={font.small}>{user.email}</Text> : null}
-          <Text style={font.small}>{role ? ROLE_LABELS[role] : '—'}</Text>
+          {user ? (
+            <Text style={font.small} numberOfLines={1}>
+              {user.email}
+            </Text>
+          ) : null}
+          {role ? (
+            <View style={styles.role}>
+              <Text style={styles.roleText}>{ROLE_LABELS[role]}</Text>
+            </View>
+          ) : null}
         </View>
         {needsAttention ? <View style={styles.dot} accessibilityLabel="Needs attention" /> : null}
         <Ionicons name="chevron-forward" size={20} color={colors.textSubtle} />
@@ -63,18 +74,16 @@ export default function MoreScreen() {
           onPress={() => router.push('/notification-settings')}
         />
       </View>
-      <Button title="Sign out" variant="secondary" onPress={confirmSignOut} />
+      <Button title="Sign out" variant="secondary" onPress={confirmSignOut} icon="log-out-outline" />
       <Text style={[font.caption, styles.version]}>Version {appVersion()}</Text>
     </Screen>
   );
 }
 
-type IconName = ComponentProps<typeof Ionicons>['name'];
-
 function MenuRow({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}>
-      <Ionicons name={icon} size={22} color={colors.primary} />
+      <IconTile name={icon} size={36} />
       <Text style={[font.body, styles.menuLabel]}>{label}</Text>
       <Ionicons name="chevron-forward" size={18} color={colors.textSubtle} />
     </Pressable>
@@ -91,7 +100,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  menuLabel: { flex: 1 },
+  menuLabel: { flex: 1, fontWeight: '500' },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -99,9 +108,19 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.lg,
     gap: spacing.xs,
+    ...shadow,
   },
   profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   profileText: { flex: 1, gap: 2 },
+  role: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+  },
+  roleText: { fontSize: 12, fontWeight: '700', color: colors.primary },
   pressed: { opacity: 0.7 },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.warning },
   version: { textAlign: 'center', marginTop: spacing.xl },

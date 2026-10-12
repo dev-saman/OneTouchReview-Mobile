@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { LocationRef, ReviewResponseSummary } from '@/api/types';
+import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Card';
 import { colors, font, spacing, touchTarget } from '@/constants/theme';
 import { formatDate, formatRating, humanize } from '@/utils/format';
@@ -33,6 +34,7 @@ export function RequestRow({ request, title, onPress }: Props) {
 
   const content = (
     <>
+      {title ? <Avatar name={title} size={40} /> : null}
       <View style={styles.main}>
         {title ? <Text style={styles.title}>{title}</Text> : null}
         <View style={styles.badges}>
@@ -48,7 +50,7 @@ export function RequestRow({ request, title, onPress }: Props) {
       </View>
       {rating !== null && rating !== undefined ? (
         <View style={styles.rating} accessibilityLabel={`Rated ${formatRating(rating)} out of 5`}>
-          <Ionicons name="star" size={14} color={colors.warning} />
+          <Ionicons name="star" size={14} color={colors.accent} />
           <Text style={styles.ratingText}>{formatRating(rating)}</Text>
         </View>
       ) : null}

@@ -5,8 +5,9 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 
 import { dashboardApi } from '@/api/dashboard.api';
 import { Card, InfoRow } from '@/components/ui/Card';
+import { IconTile, type IconName, type TileTone } from '@/components/ui/IconTile';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
-import { colors, font, radius, spacing } from '@/constants/theme';
+import { colors, font, radius, shadow, spacing } from '@/constants/theme';
 import { RequestRow } from '@/features/clients/RequestRow';
 import { selectSelectedLocation } from '@/features/location/selectors';
 import { ProfileBanners } from '@/features/profile/ProfileBanners';
@@ -14,19 +15,26 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
-import { formatDate, formatRating } from '@/utils/format';
+import { formatDate, formatRating, greeting } from '@/utils/format';
 
 /** Screen 7: numbers for the chosen location (location switcher in the header). */
 export default function HomeScreen() {
   const location = useAppSelector(selectSelectedLocation);
   if (location === null) {
-    return <EmptyState title="No locations yet" message="Add a location on the web to see your numbers here." />;
+    return (
+      <EmptyState
+        icon="location-outline"
+        title="No locations yet"
+        message="Add a location on the web to see your numbers here."
+      />
+    );
   }
   return <Dashboard location={location} />;
 }
 
 function Dashboard({ location }: { location: LocationSelection }) {
   const router = useRouter();
+  const firstName = useAppSelector((s) => s.auth.user?.name)?.trim().split(/\s+/)[0];
 
   const fetcher = useCallback(
     async (signal: AbortSignal) => {
@@ -53,6 +61,13 @@ function Dashboard({ location }: { location: LocationSelection }) {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
     >
+      <View style={styles.hello}>
+        <Text style={font.title} accessibilityRole="header">
+          {firstName ? `${greeting()}, ${firstName}` : greeting()}
+        </Text>
+        <Text style={font.small}>{"Here's what's happening with your business."}</Text>
+      </View>
+
       <ProfileBanners />
 
       {urgent > 0 ? (
@@ -71,17 +86,25 @@ function Dashboard({ location }: { location: LocationSelection }) {
       ) : null}
 
       <View style={styles.grid}>
-        <Stat label="Clients" value={String(stats.total_customers)} />
-        <Stat label="Requests sent" value={String(stats.total_requests_sent)} />
-        <Stat label="Responses" value={String(stats.total_responses)} />
+        <Stat icon="people" label="Clients" value={String(stats.total_customers)} />
+        <Stat icon="paper-plane" tone="info" label="Requests sent" value={String(stats.total_requests_sent)} />
+        <Stat icon="chatbubble-ellipses" label="Responses" value={String(stats.total_responses)} />
         {/* The API sends 0 when there are no responses yet. */}
-        <Stat label="Average rating" value={stats.total_responses > 0 ? formatRating(stats.avg_rating) : '—'} />
         <Stat
+          icon="star"
+          tone="accent"
+          label="Average rating"
+          value={stats.total_responses > 0 ? formatRating(stats.avg_rating) : '—'}
+        />
+        <Stat
+          icon="logo-google"
+          tone="info"
           label="Google reviews"
           value={stats.google_connected ? String(stats.google_reviews_count) : '—'}
           note={stats.google_connected ? undefined : 'Not connected'}
         />
         <Stat
+          icon="mail"
           label="Messages this month"
           value={String(stats.current_period_messages_used)}
           note={stats.messages_quota ? `of ${stats.messages_quota}` : undefined}
@@ -132,18 +155,36 @@ function withPrevious(current: number, previous: number) {
   return `${current} (before: ${previous})`;
 }
 
-function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
+function Stat({
+  icon,
+  tone = 'brand',
+  label,
+  value,
+  note,
+}: {
+  icon: IconName;
+  tone?: TileTone;
+  label: string;
+  value: string;
+  note?: string;
+}) {
   return (
     <View style={styles.stat} accessible accessibilityLabel={`${label}: ${value}${note ? ` ${note}` : ''}`}>
-      <Text style={font.small}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      {note ? <Text style={font.caption}>{note}</Text> : null}
+      <IconTile name={icon} tone={tone} size={36} />
+      <View style={styles.statText}>
+        <Text style={font.small} numberOfLines={2}>
+          {label}
+        </Text>
+        <Text style={styles.statValue}>{value}</Text>
+        {note ? <Text style={font.caption}>{note}</Text> : null}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
+  hello: { gap: spacing.xs, marginTop: spacing.xs },
   urgent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -162,8 +203,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.lg,
-    gap: spacing.xs,
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    ...shadow,
   },
-  statValue: { fontSize: 28, fontWeight: '700', color: colors.text },
+  statText: { flex: 1, gap: 2 },
+  statValue: { fontSize: 24, fontWeight: '700', color: colors.text },
 });

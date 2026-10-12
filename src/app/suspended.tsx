@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { BrandMark } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { font, spacing } from '@/constants/theme';
@@ -24,6 +25,7 @@ export default function SuspendedScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} contentStyle={styles.content}>
+      <BrandMark size={64} />
       <View style={styles.body}>
         <Text style={font.title}>Account suspended</Text>
         <Text style={font.body}>{message ?? 'This account is suspended.'}</Text>

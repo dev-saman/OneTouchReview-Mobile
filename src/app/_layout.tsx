@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 
+import { LaunchScreen } from '@/components/ui/LaunchScreen';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { refreshOnForeground, runBootstrap } from '@/features/session/sessionThunks';
 import { useAppForeground } from '@/hooks/useAppForeground';
@@ -13,6 +14,10 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { store } from '@/store/store';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
+const hideSplash = () => {
+  SplashScreen.hideAsync().catch(() => undefined);
+};
 
 export default function RootLayout() {
   return (
@@ -38,16 +43,25 @@ function RootNavigator() {
     return stopConnectivity;
   }, [dispatch]);
 
+  // Normally the launch screen hides the splash once it has drawn; this is the fallback.
   useEffect(() => {
-    if (phase !== 'booting') SplashScreen.hideAsync().catch(() => undefined);
+    if (phase !== 'booting') hideSplash();
   }, [phase]);
 
   useAppForeground(() => {
     dispatch(refreshOnForeground());
   });
 
-  // Splash stays up; no route (protected or not) renders before bootstrap resolves.
-  if (phase === 'booting') return null;
+  // No route (protected or not) renders before bootstrap resolves: the branded launch screen
+  // takes over from the native splash until then.
+  if (phase === 'booting') {
+    return (
+      <>
+        <StatusBar style="dark" />
+        <LaunchScreen onReady={hideSplash} />
+      </>
+    );
+  }
 
   return (
     <>

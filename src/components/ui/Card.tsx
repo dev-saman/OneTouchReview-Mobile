@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { colors, font, radius, spacing } from '@/constants/theme';
+import { colors, font, radius, shadow, spacing } from '@/constants/theme';
 
 export function Card({ title, children, style }: { title?: string; children: ReactNode; style?: ViewStyle }) {
   return (
@@ -20,7 +20,7 @@ type Tone = 'neutral' | 'success' | 'warning' | 'danger';
 
 const TONES: Record<Tone, { backgroundColor: string; color: string }> = {
   neutral: { backgroundColor: colors.background, color: colors.textMuted },
-  success: { backgroundColor: '#F0FDF4', color: colors.success },
+  success: { backgroundColor: colors.successSurface, color: colors.success },
   warning: { backgroundColor: colors.warningSurface, color: colors.warning },
   danger: { backgroundColor: colors.dangerSurface, color: colors.danger },
 };
@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.lg,
     gap: spacing.md,
+    ...shadow,
   },
   badge: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   badgeText: { fontSize: 12, fontWeight: '600' },

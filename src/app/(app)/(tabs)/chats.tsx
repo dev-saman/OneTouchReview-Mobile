@@ -4,6 +4,7 @@ import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'rea
 
 import { chatsApi, type ChatAssignedFilter, type ChatStatusFilter } from '@/api/chats.api';
 import type { Chat } from '@/api/types';
+import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Card';
 import { Chips } from '@/components/ui/Chips';
 import { ListFooter } from '@/components/ui/ListFooter';
@@ -32,7 +33,7 @@ const ASSIGNED: { value: ChatAssignedFilter; label: string }[] = [
 /** Screen 6: chat inbox. No realtime yet (docs/API-GAPS.md #2): refreshes on focus and foreground. */
 export default function ChatsScreen() {
   const location = useAppSelector(selectSelectedLocation);
-  if (location === null) return <EmptyState title="No chats yet" />;
+  if (location === null) return <EmptyState icon="chatbubbles-outline" title="No chats yet" />;
   return <ChatsInbox location={location} />;
 }
 
@@ -79,6 +80,7 @@ function ChatsInbox({ location }: { location: LocationSelection }) {
           contentContainerStyle={list.items.length ? undefined : styles.empty}
           ListEmptyComponent={
             <EmptyState
+              icon="chatbubbles-outline"
               title={status === 'open' ? 'No open chats' : 'No chats'}
               message="Visitors chat with you from your digital card."
             />
@@ -107,6 +109,7 @@ function Row({ chat, onPress }: { chat: Chat; onPress: () => void }) {
       accessibilityLabel={`${chatTitle(chat)}${unread ? `, ${chat.unread} unread` : ''}. ${preview(chat.last_message)}`}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
+      <Avatar name={chatTitle(chat)} />
       <View style={styles.main}>
         <View style={styles.top}>
           <Text style={[styles.name, unread && styles.unreadText]} numberOfLines={1}>
@@ -170,6 +173,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { color: colors.onPrimary, fontSize: 12, fontWeight: '700' },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: spacing.lg },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: spacing.lg + 44 + spacing.md },
   empty: { flexGrow: 1 },
 });

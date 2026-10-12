@@ -1,6 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
 
 import { colors, radius, spacing, touchTarget } from '@/constants/theme';
+
+import type { IconName } from './IconTile';
 
 type Variant = 'primary' | 'secondary' | 'text' | 'danger';
 
@@ -12,9 +15,11 @@ type Props = {
   disabled?: boolean;
   style?: ViewStyle;
   accessibilityHint?: string;
+  /** Optional leading icon. */
+  icon?: IconName;
 };
 
-export function Button({ title, onPress, variant = 'primary', loading, disabled, style, accessibilityHint }: Props) {
+export function Button({ title, onPress, variant = 'primary', loading, disabled, style, accessibilityHint, icon }: Props) {
   const inactive = disabled || loading;
   return (
     <Pressable
@@ -34,7 +39,10 @@ export function Button({ title, onPress, variant = 'primary', loading, disabled,
       {loading ? (
         <ActivityIndicator color={variant === 'primary' || variant === 'danger' ? colors.onPrimary : colors.primary} />
       ) : (
-        <Text style={[styles.label, labelStyles[variant]]}>{title}</Text>
+        <>
+          {icon ? <Ionicons name={icon} size={20} color={labelStyles[variant].color} /> : null}
+          <Text style={[styles.label, labelStyles[variant]]}>{title}</Text>
+        </>
       )}
     </Pressable>
   );
@@ -45,8 +53,10 @@ const styles = StyleSheet.create({
     minHeight: touchTarget,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
   },
   primary: { backgroundColor: colors.primary },
   primaryPressed: { backgroundColor: colors.primaryPressed },

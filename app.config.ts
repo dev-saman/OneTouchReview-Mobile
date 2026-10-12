@@ -22,7 +22,7 @@ const plugins: ExpoConfig['plugins'] = [
     {
       backgroundColor: '#FFFFFF',
       image: './assets/images/splash-icon.png',
-      imageWidth: 96,
+      imageWidth: 120,
     },
   ],
   'expo-secure-store',
@@ -30,7 +30,7 @@ const plugins: ExpoConfig['plugins'] = [
     'expo-notifications',
     {
       icon: './assets/images/android-icon-monochrome.png',
-      color: '#1D4ED8',
+      color: '#018F7C',
     },
   ],
   [

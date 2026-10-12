@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   failed: { backgroundColor: colors.danger },
   theirsText: { fontSize: 16, color: colors.text },
   oursText: { fontSize: 16, color: colors.onPrimary },
-  oursMeta: { fontSize: 12, color: '#DBEAFE' },
+  oursMeta: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
   composer: {
     padding: spacing.md,
     gap: spacing.sm,

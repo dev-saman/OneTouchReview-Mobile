@@ -269,11 +269,11 @@ function Sent({
 }
 
 const styles = StyleSheet.create({
-  tabs: { flexDirection: 'row', backgroundColor: colors.border, borderRadius: radius.md, padding: 3, gap: 3 },
+  tabs: { flexDirection: 'row', backgroundColor: colors.primarySoft, borderRadius: radius.md, padding: 4, gap: 4 },
   tab: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
-  tabActive: { backgroundColor: colors.surface },
-  tabText: { fontSize: 15, fontWeight: '600', color: colors.textMuted },
-  tabTextActive: { color: colors.text },
+  tabActive: { backgroundColor: colors.primary },
+  tabText: { fontSize: 15, fontWeight: '600', color: colors.primary },
+  tabTextActive: { color: colors.onPrimary },
   section: { gap: spacing.md },
   label: { fontSize: 14, fontWeight: '600', color: colors.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { isTransient } from '@/api/errors';
+import { BrandMark } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { font, spacing } from '@/constants/theme';
@@ -32,6 +33,7 @@ export default function StartupErrorScreen() {
 
   return (
     <Screen edges={['top', 'bottom']} contentStyle={styles.content}>
+      <BrandMark size={64} />
       <View style={styles.body}>
         <Text style={font.title}>{offline ? "You're offline" : "Couldn't start OneTouchReview"}</Text>
         <Text style={font.body}>{error?.message ?? 'Please try again.'}</Text>

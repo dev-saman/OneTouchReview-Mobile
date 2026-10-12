@@ -5,6 +5,7 @@ Read `CLAUDE.md` first (project rules), then `docs/API-GAPS.md` (contract questi
 ## Since 2026-10-07
 - **2026-10-08:** the API team answered almost every API-GAPS question (doc "OneTouchReview mobile app — answers to open API questions"). Recorded in `docs/API-GAPS.md` (`2bc4841`). See "API questions" below for what that unblocks.
 - **2026-10-12:** fixed the double `POST /devices` on every start (`83ea2f7`, see Gotchas). 130 tests pass.
+- **2026-10-12:** brand redesign from the owner's mockups and logo files: teal/gold theme, logo in headers, icon tiles, avatars, empty-state icons, new app icon / adaptive icon / notification icon / splash, and a branded launch screen while startup runs. Mockup parts without API data (charts, call buttons, list counts) and a dark mode were left out on purpose.
 - **2026-10-12:** the emulator showed only the splash screen while the app ran fine underneath (the system splash layer's exit animation was stuck). A cold boot fixed it — not an app bug. See "Running locally".
 
 ## Status in one paragraph
@@ -99,7 +100,7 @@ Shared building blocks: `useApiQuery(key, fetcher)` (keyed loads, stale requests
 3. Real Android phone (NFC writing, push) and the iPhone dev build (owner: `npx eas-cli login`, `npx eas-cli init`, `npx eas-cli device:create`, EAS file env vars — see README).
 4. Build the "Ready to build" API answers above (one small commit each).
 5. Ask for `POST /broadcasting/auth` and `PUT /digital-cards/slug` to be added to the Sheet; get the owner's OK for Firebase Messaging on iOS.
-6. Polish: app icon and splash (brand assets not supplied yet), then TestFlight and Play internal testing.
+6. TestFlight and Play internal testing (the app icon and splash are done; check the icon on a real iPhone).
 7. Owner fills the Sheet's "Done (date)" column (Claude has view-only access).
 
 ## Running locally
@@ -112,4 +113,5 @@ Shared building blocks: `useApiQuery(key, fetcher)` (keyed loads, stale requests
 
 ## Other notes
 - Baseline check of sibling repos (2026-10-06): only `Medhiwa-23_Advantage` changed (owner's own commit + merge); Stech, thedemostop, Wazigo unchanged.
-- App icons/splash are template placeholders.
+- Brand assets: generated from the owner's logo files (outside the repo) into `assets/images/` (`icon`, `android-icon-*`, `splash-icon`, `brand-mark`, `brand-logo`, `brand-wordmark`). Colours live in `src/constants/theme.ts`.
+- Between the splash and the app, the development build shows a few black seconds while it loads the bundle (also without the launch screen). Expected to be gone in release builds; not checked yet.

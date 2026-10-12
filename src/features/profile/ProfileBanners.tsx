@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   stack: { gap: spacing.md },
   banner: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, borderRadius: radius.md, padding: spacing.md },
   warning: { backgroundColor: colors.warningSurface },
-  info: { backgroundColor: '#EFF6FF' },
+  info: { backgroundColor: colors.infoSoft },
   pressed: { opacity: 0.7 },
   text: { flex: 1, gap: 2 },
   title: { fontSize: 15, fontWeight: '600' },

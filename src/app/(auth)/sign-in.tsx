@@ -6,6 +6,7 @@ import { authApi } from '@/api/auth.api';
 import { fieldError, makeError } from '@/api/errors';
 import { network } from '@/api/network';
 import type { ApiError } from '@/api/types';
+import { BrandLogo } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
@@ -57,6 +58,7 @@ export default function SignInScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
+      <BrandLogo width={260} />
       <View style={styles.header}>
         <Text style={font.title}>Sign in to OneTouchReview</Text>
         <Text style={font.small}>{"We'll email you a 6-digit code."}</Text>
@@ -101,7 +103,7 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing.sm, marginTop: spacing.xxl, marginBottom: spacing.md },
+  header: { gap: spacing.sm, marginTop: spacing.xl, marginBottom: spacing.md },
   error: { color: colors.danger, fontSize: 14 },
   google: { gap: spacing.sm, marginTop: spacing.md },
 });

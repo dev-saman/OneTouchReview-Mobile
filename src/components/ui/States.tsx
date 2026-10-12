@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { isTransient } from '@/api/errors';
@@ -5,6 +6,7 @@ import type { ApiError } from '@/api/types';
 import { colors, font, spacing } from '@/constants/theme';
 
 import { Button } from './Button';
+import type { IconName } from './IconTile';
 
 export function LoadingView({ label }: { label?: string }) {
   return (
@@ -35,9 +37,14 @@ export function ErrorState({ error, onRetry, retrying }: ErrorStateProps) {
   );
 }
 
-export function EmptyState({ title, message }: { title: string; message?: string }) {
+export function EmptyState({ title, message, icon }: { title: string; message?: string; icon?: IconName }) {
   return (
     <View style={styles.center}>
+      {icon ? (
+        <View style={styles.iconCircle} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+          <Ionicons name={icon} size={36} color={colors.primary} />
+        </View>
+      ) : null}
       <Text style={font.heading}>{title}</Text>
       {message ? <Text style={[font.small, styles.message]}>{message}</Text> : null}
     </View>
@@ -46,5 +53,14 @@ export function EmptyState({ title, message }: { title: string; message?: string
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.md },
-  message: { textAlign: 'center' },
+  message: { textAlign: 'center', maxWidth: 320 },
+  iconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
 });

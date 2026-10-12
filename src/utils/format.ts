@@ -66,3 +66,18 @@ export function isFuture(iso: string | null | undefined, now = Date.now()): bool
   const time = new Date(iso).getTime();
   return !Number.isNaN(time) && time > now;
 }
+
+/** Up to two initials for an avatar: "Test Email" → "TE", "akmal" → "AK", nothing usable → "?". */
+export function initials(name: string | null | undefined): string {
+  const words = (name ?? '').trim().split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w));
+  if (words.length === 0) return '?';
+  const letters = words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[words.length - 1][0];
+  return letters.toUpperCase();
+}
+
+/** "Good morning" / "Good afternoon" / "Good evening" for the phone's local hour. */
+export function greeting(hour = new Date().getHours()): string {
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}

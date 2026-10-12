@@ -1,4 +1,4 @@
-import { formatDate, formatPhone, formatRating, humanize, isFuture } from '../format';
+import { formatDate, formatPhone, formatRating, greeting, humanize, initials, isFuture } from '../format';
 
 describe('formatDate', () => {
   it('formats API timestamps', () => {
@@ -46,5 +46,30 @@ describe('isFuture', () => {
     expect(isFuture('2027-01-02T15:00:00.000000Z', now)).toBe(true);
     expect(isFuture('2026-10-01T15:00:00.000000Z', now)).toBe(false);
     expect(isFuture(null, now)).toBe(false);
+  });
+});
+
+describe('initials', () => {
+  it('takes the first and last word', () => {
+    expect(initials('Test Email')).toBe('TE');
+    expect(initials('Mary Ann Smith')).toBe('MS');
+  });
+
+  it('takes two letters of a single word', () => {
+    expect(initials('sample')).toBe('SA');
+  });
+
+  it('falls back to "?" when there is no name', () => {
+    expect(initials(null)).toBe('?');
+    expect(initials('  ')).toBe('?');
+    expect(initials('— ·')).toBe('?');
+  });
+});
+
+describe('greeting', () => {
+  it('follows the hour of the day', () => {
+    expect(greeting(6)).toBe('Good morning');
+    expect(greeting(12)).toBe('Good afternoon');
+    expect(greeting(18)).toBe('Good evening');
   });
 });

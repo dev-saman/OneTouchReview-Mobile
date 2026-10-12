@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { BrandMark } from '@/components/ui/Brand';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { font, spacing } from '@/constants/theme';
@@ -10,6 +11,7 @@ export default function FinishOnWebScreen() {
   const router = useRouter();
   return (
     <Screen edges={['top', 'bottom']} contentStyle={styles.content}>
+      <BrandMark size={64} />
       <View style={styles.body}>
         <Text style={font.title}>Finish setting up on the web</Text>
         <Text style={font.body}>
