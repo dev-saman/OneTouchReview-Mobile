@@ -2,17 +2,22 @@ import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { cardsApi } from '@/api/cards.api';
 import type { DigitalCard } from '@/api/types';
 import { Button } from '@/components/ui/Button';
+import { BrandWordmarkLight } from '@/components/ui/Brand';
 import { Badge, Card } from '@/components/ui/Card';
 import { Chips } from '@/components/ui/Chips';
+import { LAUNCH_COLORS } from '@/components/ui/LaunchScreen';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
-import { colors, font, radius, spacing } from '@/constants/theme';
+import { colors, font, radius, shadow, spacing } from '@/constants/theme';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import { cancelWrite, nfcAvailability, openNfcSettings, writeUriToTag } from '@/services/nfc/nfc';
+
+const QR_LOGO = require('../../../assets/images/brand-mark.png');
 
 const cardLabel = (c: DigitalCard) => c.name || (c.kind === 'business' ? 'Business card' : 'Team card');
 
@@ -60,27 +65,43 @@ function CardView({ card }: { card: DigitalCard }) {
 
   return (
     <>
-      <Card style={styles.qrCard}>
-        <Text style={[font.heading, styles.center]}>{card.name || 'Your card'}</Text>
-        {card.title ? <Text style={[font.small, styles.center]}>{card.title}</Text> : null}
+      <View style={styles.qrCard}>
+        <CardBackground />
+        <BrandWordmarkLight width={150} allWhite />
+        <Text style={[styles.cardName, styles.center]}>{card.name || 'Your card'}</Text>
+        {card.title ? <Text style={[styles.cardTitle, styles.center]}>{card.title}</Text> : null}
         {!card.enabled || !card.live ? (
           <Badge label={!card.enabled ? 'This card is turned off' : 'Not live yet'} tone="warning" />
         ) : null}
         <View style={styles.qr} accessible accessibilityLabel={`QR code for ${url}`}>
-          <QRCode value={url} size={240} backgroundColor="#FFFFFF" color="#000000" ecl="M" quietZone={12} />
+          {/* ecl H: the logo in the middle covers part of the code, high error correction keeps it scannable. */}
+          <QRCode
+            value={url}
+            size={220}
+            backgroundColor="#FFFFFF"
+            color="#000000"
+            ecl="H"
+            quietZone={10}
+            logo={QR_LOGO}
+            logoSize={44}
+            logoBackgroundColor="#FFFFFF"
+            logoMargin={4}
+            logoBorderRadius={8}
+          />
         </View>
+        <Text style={[styles.cardCaption, styles.center]}>Let people scan this QR code to leave you a review</Text>
         <Text style={[styles.url, styles.center]} selectable>
           {url}
         </Text>
-        <Text style={[font.caption, styles.center]}>Let people scan this, or share the link.</Text>
-      </Card>
+      </View>
 
-      <Button title="Share link" onPress={share} />
+      <Button title="Share link" icon="share-social-outline" onPress={share} />
       <NfcWriter url={url} />
       {card.can_edit ? (
         <Button
           title="Edit card"
           variant="text"
+          icon="create-outline"
           onPress={() => router.push({ pathname: '/card/edit', params: { id: String(card.id) } })}
         />
       ) : null}
@@ -132,7 +153,7 @@ function NfcWriter({ url }: { url: string }) {
 
   return (
     <>
-      <Button title="Write to NFC card or sticker" variant="secondary" onPress={write} />
+      <Button title="Write to NFC card or sticker" variant="secondary" icon="radio-outline" onPress={write} />
       <Modal visible={waiting} transparent animationType="fade" onRequestClose={cancelWrite}>
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
@@ -143,6 +164,21 @@ function NfcWriter({ url }: { url: string }) {
         </View>
       </Modal>
     </>
+  );
+}
+
+/** Teal-to-navy gradient behind the card, as in the brand artwork. Decorative. */
+function CardBackground() {
+  return (
+    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Defs>
+        <LinearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={colors.primary} />
+          <Stop offset="1" stopColor={LAUNCH_COLORS.top} />
+        </LinearGradient>
+      </Defs>
+      <Rect x="0" y="0" width="100%" height="100%" fill="url(#card)" />
+    </Svg>
   );
 }
 
@@ -157,10 +193,20 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
-  qrCard: { alignItems: 'center' },
+  qrCard: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.xl,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    ...shadow,
+  },
+  cardName: { fontSize: 22, fontWeight: '700', color: colors.onPrimary, marginTop: spacing.xs },
+  cardTitle: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
+  cardCaption: { fontSize: 13, color: 'rgba(255,255,255,0.9)' },
   center: { textAlign: 'center' },
-  qr: { padding: spacing.sm, backgroundColor: '#FFFFFF', borderRadius: radius.md },
-  url: { fontSize: 16, fontWeight: '600', color: colors.primary },
+  qr: { padding: spacing.sm, marginVertical: spacing.sm, backgroundColor: '#FFFFFF', borderRadius: radius.lg },
+  url: { fontSize: 14, fontWeight: '600', color: colors.onPrimary },
   stats: { flexDirection: 'row', justifyContent: 'space-between' },
   stat: { alignItems: 'center', flex: 1 },
   statValue: { fontSize: 22, fontWeight: '700', color: colors.text },
