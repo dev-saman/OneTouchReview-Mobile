@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { reportsApi } from '@/api/reports.api';
-import type { OwnerReport, ReportFrequency, ReviewPointStat, Sentiment } from '@/api/types';
+import type { InsightLocation, OwnerReport, ReportFrequency, ReviewPointStat, Sentiment } from '@/api/types';
 import { Badge, Card, InfoRow } from '@/components/ui/Card';
 import { Chips } from '@/components/ui/Chips';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
@@ -110,7 +110,7 @@ function InsightsTab({ location }: { location: LocationSelection }) {
   useRefreshOnFocus(q.refresh);
   if (q.loading) return <LoadingView />;
   if (!q.data) return q.error ? <ErrorState error={q.error} onRetry={q.reload} /> : null;
-  const { period, coverage, sentiment, previous_sentiment: before } = q.data;
+  const { period, coverage, sentiment, previous_sentiment: before, themes, staff, locations } = q.data;
 
   return (
     <ScrollView contentContainerStyle={styles.content} refreshControl={<Refresh q={q} />}>
@@ -123,12 +123,104 @@ function InsightsTab({ location }: { location: LocationSelection }) {
         <SentimentRow label="Neutral" now={sentiment} before={before} k="neutral" />
         <SentimentRow label="Negative" now={sentiment} before={before} k="negative" />
       </Card>
+      {themes?.length ? (
+        <Card title="What reviews talk about">
+          {themes.map((t) => (
+            <MentionRow
+              key={t.key}
+              title={t.label}
+              mentions={t.mentions}
+              previous={t.previous_mentions}
+              positive={t.positive}
+              negative={t.negative}
+            />
+          ))}
+        </Card>
+      ) : null}
+      {staff?.length ? (
+        <Card title="Team members mentioned">
+          {staff.map((m) => (
+            <MentionRow
+              key={m.staff_member_id}
+              title={m.name}
+              subtitle={m.location_name}
+              mentions={m.mentions}
+              previous={m.previous_mentions}
+              positive={m.positive}
+              negative={m.negative}
+            />
+          ))}
+        </Card>
+      ) : null}
+      {locations && locations.length > 1 ? (
+        <Card title="By location">
+          {locations.map((l) => (
+            <LocationRow key={l.id} location={l} />
+          ))}
+        </Card>
+      ) : null}
       <Card title="Coverage">
         <InfoRow label="Reviews in this period" value={String(coverage.reviews)} />
         <InfoRow label="Analysed" value={String(coverage.tagged)} />
         {coverage.pending ? <InfoRow label="Waiting to be analysed" value={String(coverage.pending)} /> : null}
       </Card>
     </ScrollView>
+  );
+}
+
+/** A theme or team member: mentions (with the period before), and how many were positive / negative. */
+function MentionRow({
+  title,
+  subtitle,
+  mentions,
+  previous,
+  positive,
+  negative,
+}: {
+  title: string;
+  subtitle?: string | null;
+  mentions: number;
+  previous: number;
+  positive: number;
+  negative: number;
+}) {
+  return (
+    <View style={styles.point}>
+      <View style={styles.pointTop}>
+        <Text style={[font.body, styles.flex]}>{title}</Text>
+        <Text style={font.small}>
+          {mentions} {mentions === 1 ? 'mention' : 'mentions'}
+        </Text>
+      </View>
+      <Text style={font.caption}>
+        {[subtitle, `${positive} positive · ${negative} negative`, `before: ${previous}`].filter(Boolean).join(' · ')}
+      </Text>
+    </View>
+  );
+}
+
+function LocationRow({ location }: { location: InsightLocation }) {
+  const topTheme = typeof location.top_theme === 'string' && location.top_theme.trim() ? location.top_theme : null;
+  const topComplaint =
+    typeof location.top_complaint === 'string' && location.top_complaint.trim() ? location.top_complaint : null;
+  return (
+    <View style={styles.point}>
+      <View style={styles.pointTop}>
+        <Text style={[font.body, styles.flex]}>{location.name}</Text>
+        <Text style={font.small}>
+          {location.reviews} {location.reviews === 1 ? 'review' : 'reviews'}
+        </Text>
+      </View>
+      <Text style={font.caption}>
+        {[
+          `${location.positive} positive · ${location.negative} negative`,
+          topTheme ? `Most talked about: ${topTheme}` : null,
+          topComplaint ? `Top complaint: ${topComplaint}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+      </Text>
+    </View>
   );
 }
 

@@ -413,6 +413,42 @@ export type Insights = {
   coverage: { reviews: number; tagged: number; pending: number };
   sentiment: Sentiment;
   previous_sentiment: Sentiment;
+  /** Item shapes from API-GAPS #28. */
+  themes: InsightTheme[];
+  staff: InsightStaff[];
+  locations: InsightLocation[];
+};
+
+export type InsightTheme = {
+  key: string;
+  label: string;
+  mentions: number;
+  positive: number;
+  negative: number;
+  previous_mentions: number;
+  previous_negative: number;
+};
+
+export type InsightStaff = {
+  staff_member_id: number;
+  name: string;
+  location_id: number | null;
+  location_name: string | null;
+  mentions: number;
+  positive: number;
+  negative: number;
+  previous_mentions: number;
+};
+
+export type InsightLocation = {
+  id: number;
+  name: string;
+  reviews: number;
+  positive: number;
+  negative: number;
+  /** Shape not documented beyond the name: shown only when it is text. */
+  top_theme: unknown;
+  top_complaint: unknown;
 };
 
 export type ReviewPointStat = {
