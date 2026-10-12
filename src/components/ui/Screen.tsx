@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/constants/theme';
+
+import { KeyboardAvoider } from './KeyboardAvoider';
 
 type Props = {
   children: ReactNode;
@@ -15,7 +17,7 @@ type Props = {
 export function Screen({ children, scroll = true, edges = ['bottom'], contentStyle }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoider>
         {scroll ? (
           <ScrollView
             contentContainerStyle={[styles.content, contentStyle]}
@@ -27,7 +29,7 @@ export function Screen({ children, scroll = true, edges = ['bottom'], contentSty
         ) : (
           <View style={[styles.flex, contentStyle]}>{children}</View>
         )}
-      </KeyboardAvoidingView>
+      </KeyboardAvoider>
     </SafeAreaView>
   );
 }

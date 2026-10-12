@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { aiApi } from '@/api/reports.api';
 import type { ApiError } from '@/api/types';
 import { Button } from '@/components/ui/Button';
+import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { can } from '@/config/permissions';
 import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
@@ -86,11 +87,7 @@ function Conversation({ starters, initialLeft }: { starters: string[]; initialLe
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 96 : 0}
-      >
+      <KeyboardAvoider>
         <ScrollView
           ref={scroll}
           style={styles.flex}
@@ -165,7 +162,7 @@ function Conversation({ starters, initialLeft }: { starters: string[]; initialLe
             <Button title="Ask" onPress={() => ask(text)} loading={asking} disabled={!text.trim() || asksLeft <= 0} style={styles.send} />
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAvoider>
     </SafeAreaView>
   );
 }

@@ -4,8 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -20,6 +18,7 @@ import { CHAT_MESSAGE_MAX, chatsApi } from '@/api/chats.api';
 import type { Chat, ChatMessage } from '@/api/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Badge } from '@/components/ui/Card';
 import { ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
@@ -129,11 +128,7 @@ export default function ChatScreen() {
           ),
         }}
       />
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 96 : 0}
-      >
+      <KeyboardAvoider>
         <AssignBar chat={chat} busy={assignBusy} onPress={() => setAssigning(true)} />
         <AssignSheet
           visible={assigning}
@@ -151,7 +146,7 @@ export default function ChatScreen() {
           onRefresh={refresh}
         />
         <Composer chat={chat} quickReplies={data.quickReplies} onSend={send} />
-      </KeyboardAvoidingView>
+      </KeyboardAvoider>
     </SafeAreaView>
   );
 }
