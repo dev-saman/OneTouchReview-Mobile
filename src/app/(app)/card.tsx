@@ -13,6 +13,7 @@ import { LAUNCH_COLORS } from '@/components/ui/LaunchScreen';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, radius, shadow, spacing } from '@/constants/theme';
 import { CardQr } from '@/features/card/CardQr';
+import { InsightsCard } from '@/features/card/InsightsCard';
 import { cardLabel, defaultShareCard, shareableCards } from '@/features/card/shareCard';
 import { ShareSheet } from '@/features/card/ShareSheet';
 import { selectSelectedLocation } from '@/features/location/selectors';
@@ -51,13 +52,13 @@ export default function MyCardScreen() {
           onChange={(v) => setSelectedId(Number(v))}
         />
       ) : null}
-      <CardView card={card} onShare={() => setSharing(true)} />
+      <CardView card={card} onShare={() => setSharing(true)} onCardChanged={refresh} />
       {sharing ? <ShareSheet cards={cards} initialId={card.id} onClose={() => setSharing(false)} /> : null}
     </ScrollView>
   );
 }
 
-function CardView({ card, onShare }: { card: DigitalCard; onShare: () => void }) {
+function CardView({ card, onShare, onCardChanged }: { card: DigitalCard; onShare: () => void; onCardChanged: () => void }) {
   const router = useRouter();
   const url = card.short_url!;
   const stats = card.stats_30d;
@@ -101,6 +102,7 @@ function CardView({ card, onShare }: { card: DigitalCard; onShare: () => void })
           </View>
         </Card>
       ) : null}
+      <InsightsCard key={card.id} card={card} onCardChanged={onCardChanged} />
       <Text style={[font.caption, styles.center]}>
         Phones can’t pass a link to another phone by tapping. Use the QR code or Share card for that.
       </Text>
