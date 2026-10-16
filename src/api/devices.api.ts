@@ -19,7 +19,7 @@ export const devicesApi = {
 
   preferences: (signal?: AbortSignal) => network.get<NotificationPreferences>(Paths.notificationPreferences, { signal }),
 
-  /** Send any of the four booleans. */
+  /** Send any of the six booleans. */
   updatePreferences: (changes: Partial<NotificationPreferences>) =>
     network.put<NotificationPreferences>(Paths.notificationPreferences, changes),
 };

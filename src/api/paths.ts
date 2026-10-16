@@ -51,6 +51,24 @@ export const Paths = {
   googleReviewAiReply: (id: number) => `/google-reviews/${id}/ai-reply`,
   googleReviewReply: (id: number) => `/google-reviews/${id}/reply`,
   googleReviewReplyCoach: (id: number) => `/google-reviews/${id}/reply-coach`,
+  googleReviewChanges: (id: number) => `/google-reviews/${id}/changes`,
+  googleReviewTags: (id: number) => `/google-reviews/${id}/tags`,
+  googleReviewNotes: (id: number) => `/google-reviews/${id}/notes`,
+
+  // 4 Reviews (all sites)
+  siteReviews: '/site-reviews',
+  siteReview: (id: number) => `/site-reviews/${id}`,
+  siteReviewAiReply: (id: number) => `/site-reviews/${id}/ai-reply`,
+  siteReviewReply: (id: number) => `/site-reviews/${id}/reply`,
+  siteReviewTags: (id: number) => `/site-reviews/${id}/tags`,
+  siteReviewNotes: (id: number) => `/site-reviews/${id}/notes`,
+  locationReviewProfiles: (locationId: number) => `/locations/${locationId}/review-profiles`,
+  reviewsSummary: '/reviews/summary',
+  reviewsSummaryRefresh: '/reviews/summary/refresh',
+  reviewTags: '/review-tags',
+  reviewNote: (id: number) => `/review-notes/${id}`,
+  reviewShield: '/review-shield',
+  reviewShieldFlag: (id: number) => `/review-shield/${id}`,
 
   // 5 Private feedback
   privateFeedback: '/private-feedback',
@@ -64,20 +82,62 @@ export const Paths = {
   chatRead: (id: number) => `/chats/${id}/read`,
   chatSettings: '/chat-settings',
   chatTeam: '/chat-team',
+  /** Realtime: Pusher-protocol channel auth for Reverb. */
+  broadcastingAuth: '/broadcasting/auth',
 
   // 8 My card
   digitalCards: '/digital-cards',
+  digitalCardStats: (id: number) => `/digital-cards/${id}/stats`,
+  digitalCardInsights: (id: number) => `/digital-cards/${id}/insights`,
+  digitalCardSuggestionApply: (id: number, insightId: number, key: string) =>
+    `/digital-cards/${id}/insights/${insightId}/suggestions/${encodeURIComponent(key)}/apply`,
+  digitalCardSuggestionDismiss: (id: number, insightId: number, key: string) =>
+    `/digital-cards/${id}/insights/${insightId}/suggestions/${encodeURIComponent(key)}/dismiss`,
   // 11 Edit card
   digitalCard: (id: number) => `/digital-cards/${id}`,
   digitalCardPhoto: (id: number) => `/digital-cards/${id}/photo`,
+  digitalCardSlugAvailable: '/digital-cards/slug-available',
+  /** The business card's address (location and member cards use PATCH /digital-cards/{id}). */
+  digitalCardBusinessSlug: '/digital-cards/slug',
+  digitalCardGallery: (id: number) => `/digital-cards/${id}/gallery`,
+  digitalCardGalleryItem: (id: number, itemId: number) => `/digital-cards/${id}/gallery/${itemId}`,
+  digitalCardVideos: (id: number) => `/digital-cards/${id}/videos`,
+  digitalCardBrochures: (id: number) => `/digital-cards/${id}/brochures`,
+  digitalCardBrochure: (id: number, itemId: number) => `/digital-cards/${id}/brochures/${itemId}`,
 
   // 12 Reports
   insights: '/analytics/insights',
   reviewPoints: '/review-points',
+  reviewPoint: (id: number) => `/review-points/${id}`,
   ownerReportPreview: '/settings/owner-report/preview',
+  attribution: '/analytics/attribution',
+  attributionReviews: '/analytics/attribution/reviews',
+  followUpResults: '/follow-ups/results',
   aiStatus: '/ai/status',
   aiAsk: '/ai/ask',
   aiAskSuggestions: '/ai/ask/suggestions',
+
+  // 15 Card assistant
+  assistantConversations: '/assistant/conversations',
+  assistantConversation: (id: number) => `/assistant/conversations/${id}`,
+  assistantMessageCorrection: (id: number) => `/assistant/messages/${id}/correction`,
+  assistantBookings: '/assistant/bookings',
+  assistantBookingConfirm: (id: number) => `/assistant/bookings/${id}/confirm`,
+  assistantBookingSuggest: (id: number) => `/assistant/bookings/${id}/suggest`,
+  assistantTraining: '/assistant/training',
+  assistantTrainingAnswer: (id: number) => `/assistant/training/${id}/answer`,
+  assistantTrainingDismiss: (id: number) => `/assistant/training/${id}/dismiss`,
+  assistantReport: '/assistant/report',
+
+  // 16 Leads (ids are strings: c5 = chat, a7 = assistant conversation)
+  leads: '/leads',
+  leadAddClient: (id: string) => `/leads/${encodeURIComponent(id)}/add-client`,
+
+  // 17 Google profile approvals
+  googleProfileChanges: (locationId: number) => `/locations/${locationId}/google-profile/changes`,
+  googleProfileChangeApprove: (changeId: number) => `/google-profile/changes/${changeId}/approve`,
+  googleProfileChangeDecline: (changeId: number) => `/google-profile/changes/${changeId}/decline`,
+  googleProfileChangeUndo: (changeId: number) => `/google-profile/changes/${changeId}/undo`,
 
   // 13 Notifications (bell)
   notifications: '/notifications',

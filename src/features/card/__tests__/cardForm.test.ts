@@ -9,6 +9,8 @@ jest.mock('expo-image-picker', () => ({}));
 const CARD: DigitalCard = {
   id: 1,
   kind: 'business',
+  location_id: null,
+  slug: null,
   enabled: false,
   live: false,
   name: 'Smith Law',

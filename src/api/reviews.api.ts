@@ -2,13 +2,16 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 
 import { network } from './network';
 import { Paths } from './paths';
-import type { AiReply, GoogleReview, ReplyCoach, ReplyResult, ReviewsPage } from './types';
+import type { AiReply, GoogleReview, ReplyCoach, ReplyResult, ReviewChange, ReviewNote, ReviewsPage, ReviewTag } from './types';
 
 /** Notifications tab: ai_drafts opens Reviews with status=ai-draft. */
 export const AI_DRAFT_STATUS = 'ai-draft';
 
-/** `status` filter values (API-GAPS #22). "negative" is 3 stars and below. */
-export type ReviewStatus = 'no-reply' | 'negative' | typeof AI_DRAFT_STATUS;
+/**
+ * `status` filter values (API-GAPS #22). "negative" is 3 stars and below. Row 69: "changed" (a
+ * change in 90 days) and "removed" (removed reviews are left out unless status=removed).
+ */
+export type ReviewStatus = 'no-reply' | 'negative' | typeof AI_DRAFT_STATUS | 'changed' | 'removed';
 
 /** The waiting AI draft's text, or '' when there is none. */
 export const waitingDraftText = (aiReply: AiReply | null | undefined): string =>
@@ -18,6 +21,7 @@ export type ReviewsQuery = {
   location: LocationSelection;
   status?: ReviewStatus;
   rating?: number;
+  tagId?: number;
   search?: string;
   page: number;
 };
@@ -29,10 +33,10 @@ export const COACH_MIN = 15;
 
 /** Endpoints tab, rows "4 Reviews". */
 export const reviewsApi = {
-  list: ({ location, status, rating, search, page }: ReviewsQuery, signal?: AbortSignal) =>
+  list: ({ location, status, rating, tagId, search, page }: ReviewsQuery, signal?: AbortSignal) =>
     network.get<ReviewsPage>(Paths.googleReviews, {
       signal,
-      params: { location_id: location, status, rating, search: search?.trim() || undefined, page },
+      params: { location_id: location, status, rating, tag_id: tagId, search: search?.trim() || undefined, page },
     }),
 
   get: async (id: number, signal?: AbortSignal) =>
@@ -52,4 +56,20 @@ export const reviewsApi = {
 
   /** Tips for a reply the user typed (15–4096 characters). */
   coach: (id: number, text: string) => network.post<ReplyCoach>(Paths.googleReviewReplyCoach(id), { text }),
+
+  /** Edits with before and after, removed from Google, back again; newest first. */
+  changes: async (id: number, signal?: AbortSignal) =>
+    (await network.get<{ changes: ReviewChange[] }>(Paths.googleReviewChanges(id), { signal })).changes,
+
+  /** Any role. Replaces the review's tags (up to 10). */
+  setTags: async (id: number, tagIds: number[]) =>
+    (await network.put<{ tags: ReviewTag[] }>(Paths.googleReviewTags(id), { tag_ids: tagIds })).tags,
+
+  /** Private notes, never shown publicly. Edit / delete: reviewExtrasApi. */
+  notes: async (id: number, signal?: AbortSignal) =>
+    (await network.get<{ notes: ReviewNote[] }>(Paths.googleReviewNotes(id), { signal })).notes,
+
+  /** 422 NOTE_LIMIT_REACHED. */
+  addNote: async (id: number, body: string) =>
+    (await network.post<{ note: ReviewNote }>(Paths.googleReviewNotes(id), { body })).note,
 };

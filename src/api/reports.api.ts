@@ -2,7 +2,19 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 
 import { network } from './network';
 import { Paths } from './paths';
-import type { AiAnswer, AiHistoryTurn, Insights, OwnerReport, ReportFrequency, ReviewPoints } from './types';
+import type {
+  AiAnswer,
+  AiHistoryTurn,
+  Attribution,
+  AttributionReviewsPage,
+  FollowUpResults,
+  Insights,
+  OwnerReport,
+  ReportFrequency,
+  ReviewPoints,
+} from './types';
+
+export type AttributionGroup = 'likely' | 'unlinked';
 
 /** Endpoints tab, rows "12 Reports". location_id as the other screens (answers echo it). */
 export const reportsApi = {
@@ -12,6 +24,21 @@ export const reportsApi = {
   /** What people like / don't like. */
   points: (location: LocationSelection, signal?: AbortSignal) =>
     network.get<ReviewPoints>(Paths.reviewPoints, { signal, params: { location_id: location } }),
+
+  /** Reviews that likely came from requests, cards or QR codes (default last 30 days). Never "left" a review. */
+  attribution: (location: LocationSelection, signal?: AbortSignal) =>
+    network.get<Attribution>(Paths.attribution, { signal, params: { location_id: location } }),
+
+  /** The reviews behind those numbers. Staff get request.customer null. */
+  attributionReviews: (location: LocationSelection, group: AttributionGroup, cursor?: string | null, signal?: AbortSignal) =>
+    network.get<AttributionReviewsPage>(Paths.attributionReviews, {
+      signal,
+      params: { location_id: location, group, cursor: cursor ?? undefined },
+    }),
+
+  /** days = 30 | 90. Follow-up settings are web only. */
+  followUps: (location: LocationSelection, days: 30 | 90, signal?: AbortSignal) =>
+    network.get<FollowUpResults>(Paths.followUpResults, { signal, params: { location_id: location, days } }),
 
   /** Weekly / monthly report numbers. Owners and managers. */
   ownerReport: async (frequency: ReportFrequency, signal?: AbortSignal) =>
