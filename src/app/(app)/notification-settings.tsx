@@ -13,7 +13,7 @@ import { pushPermission, type PushPermission } from '@/services/push/push';
 
 type Key = keyof NotificationPreferences;
 
-/** Screen 3: push settings — the four documented switches (GET/PUT /notification-preferences). */
+/** Screen 3: push settings — the six item switches (GET/PUT /notification-preferences, Push tab notes). */
 export default function NotificationSettingsScreen() {
   const fetcher = useCallback(async (signal: AbortSignal) => {
     const [prefs, permission] = await Promise.all([devicesApi.preferences(signal), pushPermission()]);
@@ -74,6 +74,18 @@ export default function NotificationSettingsScreen() {
           busy={saving === 'google_reviews'}
           onChange={(v) => change('google_reviews', v)}
         />
+        <Toggle
+          label="New reviews from other sites"
+          value={prefs.site_reviews}
+          busy={saving === 'site_reviews'}
+          onChange={(v) => change('site_reviews', v)}
+        />
+        <Toggle
+          label="Google review changed or removed"
+          value={prefs.review_changes}
+          busy={saving === 'review_changes'}
+          onChange={(v) => change('review_changes', v)}
+        />
       </Card>
     </ScrollView>
   );
@@ -84,6 +96,8 @@ const pick = (p: NotificationPreferences): NotificationPreferences => ({
   private_feedback: p.private_feedback,
   private_feedback_low_only: p.private_feedback_low_only,
   google_reviews: p.google_reviews,
+  site_reviews: p.site_reviews,
+  review_changes: p.review_changes,
 });
 
 function PermissionNote({ permission }: { permission: PushPermission }) {
