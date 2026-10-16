@@ -1,6 +1,22 @@
-# Session handoff — 2026-10-12 (end of day)
+# Session handoff — 2026-10-16
 
 Read `CLAUDE.md` first (project rules), then `docs/API-GAPS.md` (contract questions and the API team's answers).
+
+## 2026-10-16: the Sheet's October 14 update (milestone 1 of the new work)
+The Sheet gained Endpoints rows 66–116, a **Dashboard** tab, Push tab rows 9–19, Notifications tab rows 15–24, new Errors codes and Screen checklist rows 3–18 (new screens 15 Card assistant, 16 Leads, 17 Google profile approvals). `POST /broadcasting/auth` and `PUT /digital-cards/slug` (API-GAPS #2, #26) are now in it, and the six bell kinds of #29 are documented.
+- **Live check:** every new route answers **401** without a token (fake paths under the same prefixes answer 404), so all of them exist on production. Response shapes are **not** checked: there is still no test-business login, so types follow the Sheet's response examples.
+- **Done** (4 commits): `eb47881` API layer (paths, types, `siteReviews`, `assistant`, `leads`, `googleProfile` modules; cards/reports/reviews extended). `c195aa1` six push switches. `9e6b024` Reviews: Changed / Removed filters, last change, change history on the detail (row 69). `e5da83e` bell + push open every documented kind (`features/notifications/openTarget.ts` serves both; `deepLink.ts` removed). Lint, typecheck and **162 tests** pass.
+- **Remaining milestones** (each: build → verify → commit → stop for review):
+  2. Reviews from every site: site tabs from `by_profile` / `platforms[]`, site review detail (AI reply: copy + "Open on {site}", post only where `can_reply`), AI summary card, tags (filter, set; owners/managers create), private notes, Review Shield detail (read-only). Then point `openTarget`'s `siteReview` / `siteReviews` / `shieldFlag` at the screens.
+  3. Dashboard tab + Share sheet (QR full screen with brightness, share link, NFC, copy; remembered card per user — AsyncStorage approval needed, see CLAUDE.md). **Owner decision needed:** tile 2 "Quick actions" vs. the 2026-10-12 decision "no quick actions on Home". Brightness needs a new native package (`expo-brightness`) — owner's OK.
+  4. My card insights (Apply / Dismiss) and card media (gallery ≤ 12 with reorder/captions, ≤ 3 videos, ≤ 3 PDF brochures — the PDF picker needs `expo-document-picker`), business card address (`PUT /digital-cards/slug`).
+  5. Card assistant (15) and Leads (16).
+  6. Google profile approvals (17).
+  7. Reports: reviews from your requests (attribution) and follow-up results.
+  8. Realtime chats (Reverb via Pusher protocol): needs a Pusher-protocol client package — owner's OK.
+- Open details for the API team: API-GAPS #30.
+
+# Session handoff — 2026-10-12 (end of day)
 
 ## Today (2026-10-12) in short
 - **API answers built.** The API team answered almost every API-GAPS question on 2026-10-08 (recorded in `2bc4841`). All eight "ready to build" items are in: #11, #13, #18, #21, #22, #23, #27, #28 (one commit each, see Done).

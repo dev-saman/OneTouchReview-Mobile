@@ -39,7 +39,7 @@ React Native + Expo (TypeScript) app for OneTouchReview business owners and staf
 - Adding a client with a phone needs the consent tick ("This client agreed to receive texts from us"); never pre-tick; send `consent_confirmed: true` only after explicit confirmation. Email-only clients: no tick, no consent fields.
 - Send a new UUID `client_id` (expo-crypto `randomUUID`) with chat replies and Resend; reuse it when retrying the same operation.
 - Push: expo-notifications; `POST /devices` after permission (asked after sign-in), once per token. `fcm_token` is an FCM registration token on both platforms (API-GAPS #1, answered 2026-10-08): Android uses the native token; iOS needs Firebase Messaging `getToken()`, never the raw APNs token. Not built yet: adding `@react-native-firebase/messaging` (via `npx expo install`) needs the owner's OK first.
-- Realtime: Laravel Reverb via Pusher protocol (API-GAPS #2, answered 2026-10-08). Config from `/app-config` `reverb`; channel `private-business.{id}.chats`; events `chat.message` `{ chat_id, message }` and `chat.updated` `{ chat_id }` (re-fetch the chat). Auth is `POST /broadcasting/auth`, which is NOT in the Sheet yet: don't build realtime until it's added. App must keep working without realtime (refresh on focus / polling).
+- Realtime: Laravel Reverb via Pusher protocol (API-GAPS #2, answered 2026-10-08). Config from `/app-config` `reverb`; channel `private-business.{id}.chats`; events `chat.message` `{ chat_id, message }` and `chat.updated` `{ chat_id }` (re-fetch the chat). Auth is `POST /broadcasting/auth` (Sheet row 66 since 2026-10-14). App must keep working without realtime (refresh on focus / polling).
 - NFC: react-native-nfc-manager, NDEF URI record with `short_url`; always cancel the technology request. No phone-to-phone NFC sharing.
 - Never log tokens, passwords, codes, Google tokens or client content. Never commit secrets, test logins, keystores, `google-services.json` or `GoogleService-Info.plist`.
 
@@ -48,7 +48,8 @@ React Native + Expo (TypeScript) app for OneTouchReview business owners and staf
 - Colours, radius and shadow come from `src/constants/theme.ts` only (brand teal `#018F7C`, gold `#FBB10A`, navy text `#0B1F3A`). No hard-coded colours in screens.
 - Reuse `src/components/ui/` (Avatar, IconTile, Brand, AuthHeader, Button/TextField `icon`, EmptyState `icon`, Card) before writing new components.
 - Light theme only. The one dark surface is the launch screen; its `LAUNCH_COLORS.top` must match the native splash `backgroundColor` in `app.config.ts`.
-- Owner decisions: no quick actions on Home; Send is the raised centre tab.
+- Owner decisions: no quick actions on Home (2026-10-12); Send is the raised centre tab. The Sheet's Dashboard tab (2026-10-14) asks for three quick actions at the top (Send request, Share card, Ask AI): confirm with the owner before building them.
+- Plan-gated features (card assistant, Google profile approvals, card insights, some Reports): hide on 403 `PLAN_REQUIRED`, no upgrade prompt. Review sites come from the API (`by_profile`, `platforms[]`): never hardcode a site list.
 - Brand images live in `assets/images/` (generated from the owner's logo files). Icon / splash / `app.config.ts` changes need `npx expo prebuild --platform android --clean` before rebuilding.
 - Mockups contain real names: never copy them into code, tests, docs or commits.
 - Check visual changes on the emulator (read-only screens only while it is on a real business).
