@@ -7,32 +7,36 @@ import type { UploadFile } from '@/api/network';
 export const MAX_PHOTO_WIDTH = 1200;
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
+/** Gallery photos are shown full screen, so they keep a little more detail. */
+export const MAX_GALLERY_WIDTH = 1600;
+
 /** Only shrink: never upscale small photos. */
-export function targetWidth(width: number | undefined): number | null {
-  return width && width > MAX_PHOTO_WIDTH ? MAX_PHOTO_WIDTH : null;
+export function targetWidth(width: number | undefined, max = MAX_PHOTO_WIDTH): number | null {
+  return width && width > max ? max : null;
 }
 
 export type PickResult = { file: UploadFile } | { cancelled: true } | { error: 'permission' | 'too_large' };
 
 /**
  * Picks a photo from the library and converts it to JPEG (HEIC → JPEG, as the Endpoints tab
- * asks), shrunk to at most 1200 px wide so it stays far below the 10 MB limit.
+ * asks), shrunk to at most 1200 px wide so it stays far below the 10 MB limit. The card photo is
+ * cropped square; gallery photos keep their shape.
  */
-export async function pickCardPhoto(): Promise<PickResult> {
+export async function pickCardPhoto({ square = true, maxWidth = MAX_PHOTO_WIDTH } = {}): Promise<PickResult> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) return { error: 'permission' };
 
   const picked = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
-    allowsEditing: true,
-    aspect: [1, 1],
+    allowsEditing: square,
+    aspect: square ? [1, 1] : undefined,
     quality: 1,
   });
   if (picked.canceled || !picked.assets?.[0]) return { cancelled: true };
   const asset = picked.assets[0];
 
   const context = ImageManipulator.manipulate(asset.uri);
-  const width = targetWidth(asset.width);
+  const width = targetWidth(asset.width, maxWidth);
   if (width) context.resize({ width });
   const image = await context.renderAsync();
   const result = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.85 });

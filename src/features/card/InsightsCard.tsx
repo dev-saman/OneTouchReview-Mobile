@@ -31,7 +31,9 @@ export function InsightsCard({ card, onCardChanged }: { card: DigitalCard; onCar
     return (
       <Card title="Weekly insights">
         <Text style={font.body}>We need {data.needed} visits a week for a summary.</Text>
-        <Text style={font.caption}>{data.views_this_week} visits this week so far.</Text>
+        <Text style={font.caption}>
+          {data.views_this_week} {data.views_this_week === 1 ? 'visit' : 'visits'} this week so far.
+        </Text>
       </Card>
     );
   }

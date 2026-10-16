@@ -13,12 +13,13 @@ import { TextField } from '@/components/ui/TextField';
 import { can } from '@/config/permissions';
 import { colors, font, radius, spacing } from '@/constants/theme';
 import { cardChanges, formFromCard, normalizeSlug, slugChange, type CardForm } from '@/features/card/cardForm';
+import { MediaSections } from '@/features/card/MediaSections';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { pickCardPhoto } from '@/services/photos/cardPhoto';
 import { useAppSelector } from '@/store/hooks';
 
-/** Screen 11: edit a card's text, links, address, on/off and photo (business or team card). */
+/** Screen 11: edit a card's text, links, address, on/off, photo, card address and media (gallery, videos, brochures). */
 export default function EditCardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const cardId = Number(id);
@@ -180,6 +181,8 @@ function EditForm({ card: initial }: { card: DigitalCard }) {
           />
         </View>
       </Card>
+
+      <MediaSections card={card} onCard={(updated) => setCard((c) => ({ ...c, gallery: updated.gallery, videos: updated.videos, brochures: updated.brochures }))} />
 
       {error && !shownFieldErrors ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">
