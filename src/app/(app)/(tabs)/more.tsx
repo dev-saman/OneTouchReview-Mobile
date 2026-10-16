@@ -65,7 +65,7 @@ export default function MoreScreen() {
       <View style={[styles.card, styles.menu]}>
         <MenuRow icon="qr-code-outline" label="My card" onPress={() => router.push('/card')} />
         <MenuRow icon="chatbox-ellipses-outline" label="Private feedback" onPress={() => router.push('/feedback')} />
-        <MenuRow icon="star-outline" label="Google reviews" onPress={() => router.push('/reviews')} />
+        <MenuRow icon="star-outline" label="Reviews" onPress={() => router.push('/reviews')} />
         <MenuRow icon="bar-chart-outline" label="Reports" onPress={() => router.push('/reports')} />
         {showAskAi ? <MenuRow icon="sparkles-outline" label="Ask AI" onPress={() => router.push('/ask-ai')} /> : null}
         <MenuRow

@@ -6,10 +6,13 @@ import { COACH_MIN, REPLY_MAX, reviewsApi, waitingDraftText } from '@/api/review
 import type { ApiError, GoogleReview, ReplyCoach, ReviewChange } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Badge, Card } from '@/components/ui/Card';
+import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Stars } from '@/components/ui/Stars';
 import { ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, radius, spacing } from '@/constants/theme';
 import { changeLabel } from '@/features/reviews/changes';
+import { NotesCard } from '@/features/reviews/NotesCard';
+import { TagsCard } from '@/features/reviews/TagsCard';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
 import { formatDate } from '@/utils/format';
 
@@ -29,6 +32,8 @@ export default function ReviewDetailScreen() {
     return { ...review, history: changes };
   }, [reviewId]);
   const { data, error, loading, refreshing, reload, refresh } = useApiQuery(reviewId, fetcher);
+  const loadNotes = useCallback((signal: AbortSignal) => reviewsApi.notes(reviewId, signal), [reviewId]);
+  const addNote = useCallback((body: string) => reviewsApi.addNote(reviewId, body), [reviewId]);
   // Reply changes answer with the updated review: shown on top of the loaded one.
   const [changes, setChanges] = useState<Partial<GoogleReview>>({});
   const [shownFor, setShownFor] = useState(data);
@@ -42,39 +47,45 @@ export default function ReviewDetailScreen() {
   const review = { ...data, ...changes };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
-    >
-      <Card>
-        <View style={styles.headerRow}>
-          <Text style={font.heading}>{review.reviewer_name || 'Google user'}</Text>
-          <Stars rating={review.rating} size={18} />
-        </View>
-        {review.comment ? <Text style={styles.text}>{review.comment}</Text> : <Text style={font.small}>Rating only, no comment.</Text>}
-        {review.points?.length ? (
-          <View style={styles.points}>
-            {review.points.map((p) => (
-              <Badge key={p.id} label={p.name} tone={p.kind === 'like' ? 'success' : 'neutral'} />
-            ))}
+    <KeyboardAvoider>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+      >
+        <Card>
+          <View style={styles.headerRow}>
+            <Text style={font.heading}>{review.reviewer_name || 'Google user'}</Text>
+            <Stars rating={review.rating} size={18} />
           </View>
-        ) : null}
-        <Text style={font.caption}>{[review.location?.name, formatDate(review.review_time)].filter(Boolean).join(' · ')}</Text>
-        {review.removed_at ? <Badge label={`Removed from Google ${formatDate(review.removed_at)}`} tone="danger" /> : null}
-      </Card>
+          {review.comment ? <Text style={styles.text}>{review.comment}</Text> : <Text style={font.small}>Rating only, no comment.</Text>}
+          {review.points?.length ? (
+            <View style={styles.points}>
+              {review.points.map((p) => (
+                <Badge key={p.id} label={p.name} tone={p.kind === 'like' ? 'success' : 'neutral'} />
+              ))}
+            </View>
+          ) : null}
+          <Text style={font.caption}>{[review.location?.name, formatDate(review.review_time)].filter(Boolean).join(' · ')}</Text>
+          {review.removed_at ? <Badge label={`Removed from Google ${formatDate(review.removed_at)}`} tone="danger" /> : null}
+        </Card>
 
-      {review.history.length ? <ChangesCard changes={review.history} /> : null}
+        {review.history.length ? <ChangesCard changes={review.history} /> : null}
 
-      {review.removed_at ? null : (
-        <ReplySection
-          // Remount the editor when the posted reply changes, so it starts from the new text.
-          key={review.reply_comment ?? 'none'}
-          review={review}
-          onChanged={(change) => setChanges((c) => ({ ...c, ...change }))}
-        />
-      )}
-    </ScrollView>
+        {review.removed_at ? null : (
+          <ReplySection
+            // Remount the editor when the posted reply changes, so it starts from the new text.
+            key={review.reply_comment ?? 'none'}
+            review={review}
+            onChanged={(change) => setChanges((c) => ({ ...c, ...change }))}
+          />
+        )}
+
+        <TagsCard key={`tags-${review.id}`} tags={review.tags ?? []} onSave={(ids) => reviewsApi.setTags(review.id, ids)} />
+
+        <NotesCard reviewKey={`google-${review.id}`} load={loadNotes} add={addNote} />
+      </ScrollView>
+    </KeyboardAvoider>
   );
 }
 

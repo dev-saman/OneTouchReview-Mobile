@@ -40,13 +40,17 @@ export function openTarget(router: ReturnType<typeof useRouter>, target: Notific
     case 'siteReviews':
       // Google's own first import opens the Google reviews.
       if (target.platform === null || target.platform === 'google') router.push('/reviews');
-      else notInAppYet(text, 'Reviews from other sites');
+      else
+        router.push({
+          pathname: '/reviews',
+          params: { source: target.platform, ...(target.profileId ? { profile_id: String(target.profileId) } : {}) },
+        });
       return;
     case 'siteReview':
-      notInAppYet(text, 'Reviews from other sites');
+      router.push({ pathname: '/site-reviews/[id]', params: { id: String(target.id) } });
       return;
     case 'shieldFlag':
-      notInAppYet(text, 'Review Shield');
+      router.push({ pathname: '/review-shield/[id]', params: { id: String(target.id) } });
       return;
     case 'assistant':
       notInAppYet(text, 'Card assistant');
