@@ -12,6 +12,7 @@ import { Stars } from '@/components/ui/Stars';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
 import { selectSelectedLocation } from '@/features/location/selectors';
+import { changeLabel } from '@/features/reviews/changes';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { usePagedList } from '@/hooks/usePagedList';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
@@ -19,13 +20,15 @@ import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
 import { formatDate, formatRating } from '@/utils/format';
 
-type Filter = 'all' | 'no-reply' | 'negative' | 'ai' | '1' | '2' | '3' | '4' | '5';
+type Filter = 'all' | 'no-reply' | 'negative' | 'ai' | 'changed' | 'removed' | '1' | '2' | '3' | '4' | '5';
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'no-reply', label: 'Needs a reply' },
   { value: 'negative', label: 'Negative' },
   { value: 'ai', label: 'AI drafts' },
+  { value: 'changed', label: 'Changed' },
+  { value: 'removed', label: 'Removed from Google' },
   { value: '1', label: '1 ★' },
   { value: '2', label: '2 ★' },
   { value: '3', label: '3 ★' },
@@ -35,11 +38,21 @@ const FILTERS: { value: Filter; label: string }[] = [
 
 function statusFor(filter: Filter): ReviewStatus | undefined {
   if (filter === 'ai') return AI_DRAFT_STATUS;
-  if (filter === 'no-reply' || filter === 'negative') return filter;
+  if (filter === 'no-reply' || filter === 'negative' || filter === 'changed' || filter === 'removed') return filter;
   return undefined;
 }
 
-type Summary = Pick<ReviewsPage, 'filtered_total' | 'need_reply_count' | 'negative_count' | 'ai_drafts' | 'avg_rating'>;
+/** Opened with ?status= from the bell or a push: ai-draft, or changed (a roll-up of changed reviews). */
+function filterForParam(status: string | undefined): Filter {
+  if (status === AI_DRAFT_STATUS) return 'ai';
+  if (status === 'changed') return 'changed';
+  return 'all';
+}
+
+type Summary = Pick<
+  ReviewsPage,
+  'filtered_total' | 'need_reply_count' | 'negative_count' | 'ai_drafts' | 'avg_rating' | 'changed_count'
+>;
 
 /** Screen 4: Google reviews with filters (rating, AI drafts, search). */
 export default function ReviewsScreen() {
@@ -50,9 +63,8 @@ export default function ReviewsScreen() {
 
 function ReviewsList({ location }: { location: LocationSelection }) {
   const router = useRouter();
-  // The bell's ai_drafts item opens this screen with ?status=ai-draft.
   const params = useLocalSearchParams<{ status?: string }>();
-  const [filter, setFilter] = useState<Filter>(params.status === AI_DRAFT_STATUS ? 'ai' : 'all');
+  const [filter, setFilter] = useState<Filter>(filterForParam(params.status));
   const [query, setQuery] = useState('');
   const search = useDebouncedValue(query.trim(), 350);
 
@@ -74,6 +86,7 @@ function ReviewsList({ location }: { location: LocationSelection }) {
         negative_count: answer.negative_count,
         ai_drafts: answer.ai_drafts,
         avg_rating: answer.avg_rating,
+        changed_count: answer.changed_count,
       };
       return {
         items: answer.reviews,
@@ -130,7 +143,11 @@ function ReviewsList({ location }: { location: LocationSelection }) {
                       ? 'All caught up'
                       : filter === 'negative'
                         ? 'No negative reviews'
-                        : 'No reviews yet'
+                        : filter === 'changed'
+                          ? 'No changed reviews'
+                          : filter === 'removed'
+                            ? 'No removed reviews'
+                            : 'No reviews yet'
               }
               message={filter === 'all' && !search ? 'Google reviews for this location appear here.' : undefined}
             />
@@ -152,6 +169,7 @@ function SummaryLine({ summary }: { summary: Summary }) {
     summary.need_reply_count ? `${summary.need_reply_count} need a reply` : null,
     summary.negative_count ? `${summary.negative_count} negative` : null,
     summary.ai_drafts ? `${summary.ai_drafts} AI ${summary.ai_drafts === 1 ? 'draft' : 'drafts'} waiting` : null,
+    summary.changed_count ? `${summary.changed_count} changed` : null,
   ].filter(Boolean);
   const count = `${summary.filtered_total} ${summary.filtered_total === 1 ? 'review' : 'reviews'}`;
   return (
@@ -195,8 +213,15 @@ function Row({ item, onPress }: { item: GoogleReview; onPress: () => void }) {
         <Text style={font.small}>Rating only, no comment.</Text>
       )}
       <View style={styles.rowMeta}>
-        <Badge label={replied ? 'Replied' : 'No reply yet'} tone={replied ? 'success' : 'warning'} />
+        {item.removed_at ? (
+          <Badge label="Removed from Google" tone="danger" />
+        ) : (
+          <Badge label={replied ? 'Replied' : 'No reply yet'} tone={replied ? 'success' : 'warning'} />
+        )}
         {hasDraft ? <Badge label="AI draft" /> : null}
+        {item.last_change && !item.removed_at ? (
+          <Badge label={changeLabel(item.last_change.kind, item.last_change.old_rating, item.last_change.new_rating)} />
+        ) : null}
         <Text style={font.caption}>{[item.location?.name, formatDate(item.review_time)].filter(Boolean).join(' · ')}</Text>
       </View>
     </Pressable>

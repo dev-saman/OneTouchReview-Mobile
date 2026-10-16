@@ -3,20 +3,31 @@ import { useCallback, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { COACH_MIN, REPLY_MAX, reviewsApi, waitingDraftText } from '@/api/reviews.api';
-import type { ApiError, GoogleReview, ReplyCoach } from '@/api/types';
+import type { ApiError, GoogleReview, ReplyCoach, ReviewChange } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Badge, Card } from '@/components/ui/Card';
 import { Stars } from '@/components/ui/Stars';
 import { ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, radius, spacing } from '@/constants/theme';
+import { changeLabel } from '@/features/reviews/changes';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
 import { formatDate } from '@/utils/format';
 
-/** Screen 4 detail (also the push / bell deep link): read, AI draft, edit and post the reply. */
+/**
+ * Screen 4 detail (also the push / bell deep link): read, AI draft, edit and post the reply, and
+ * what changed on Google (row 69). Removed reviews are read-only.
+ */
 export default function ReviewDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const reviewId = Number(id);
-  const fetcher = useCallback((signal: AbortSignal) => reviewsApi.get(reviewId, signal), [reviewId]);
+  const fetcher = useCallback(async (signal: AbortSignal) => {
+    const [review, changes] = await Promise.all([
+      reviewsApi.get(reviewId, signal),
+      // The history is extra: the review still shows if it can't load.
+      reviewsApi.changes(reviewId, signal).catch((): ReviewChange[] => []),
+    ]);
+    return { ...review, history: changes };
+  }, [reviewId]);
   const { data, error, loading, refreshing, reload, refresh } = useApiQuery(reviewId, fetcher);
   // Reply changes answer with the updated review: shown on top of the loaded one.
   const [changes, setChanges] = useState<Partial<GoogleReview>>({});
@@ -50,15 +61,41 @@ export default function ReviewDetailScreen() {
           </View>
         ) : null}
         <Text style={font.caption}>{[review.location?.name, formatDate(review.review_time)].filter(Boolean).join(' · ')}</Text>
+        {review.removed_at ? <Badge label={`Removed from Google ${formatDate(review.removed_at)}`} tone="danger" /> : null}
       </Card>
 
-      <ReplySection
-        // Remount the editor when the posted reply changes, so it starts from the new text.
-        key={review.reply_comment ?? 'none'}
-        review={review}
-        onChanged={(change) => setChanges((c) => ({ ...c, ...change }))}
-      />
+      {review.history.length ? <ChangesCard changes={review.history} /> : null}
+
+      {review.removed_at ? null : (
+        <ReplySection
+          // Remount the editor when the posted reply changes, so it starts from the new text.
+          key={review.reply_comment ?? 'none'}
+          review={review}
+          onChanged={(change) => setChanges((c) => ({ ...c, ...change }))}
+        />
+      )}
     </ScrollView>
+  );
+}
+
+/** GET /google-reviews/{id}/changes, newest first. */
+function ChangesCard({ changes }: { changes: ReviewChange[] }) {
+  return (
+    <Card title="What changed on Google">
+      {changes.map((change) => (
+        <View key={change.id} style={styles.change}>
+          <Text style={styles.changeTitle}>{changeLabel(change.kind, change.old_rating, change.new_rating)}</Text>
+          <Text style={font.caption}>{formatDate(change.detected_at)}</Text>
+          {change.kind === 'edited' && change.old_text !== change.new_text ? (
+            <>
+              {change.old_text ? <Text style={[font.small, styles.before]}>Before: {change.old_text}</Text> : null}
+              {change.new_text ? <Text style={font.body}>Now: {change.new_text}</Text> : null}
+            </>
+          ) : null}
+          {change.reply_may_need_update ? <Badge label="Your reply may need an update" tone="warning" /> : null}
+        </View>
+      ))}
+    </Card>
   );
 }
 
@@ -225,4 +262,7 @@ const styles = StyleSheet.create({
   tip: { gap: 2 },
   warningText: { color: colors.warning, fontWeight: '600' },
   improvedLabel: { fontSize: 14, fontWeight: '600', color: colors.text, marginTop: spacing.xs },
+  change: { gap: spacing.xs, paddingVertical: spacing.xs },
+  changeTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
+  before: { textDecorationLine: 'line-through' },
 });
