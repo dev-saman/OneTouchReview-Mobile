@@ -53,7 +53,10 @@ export function openTarget(router: ReturnType<typeof useRouter>, target: Notific
       router.push({ pathname: '/review-shield/[id]', params: { id: String(target.id) } });
       return;
     case 'assistant':
-      notInAppYet(text, 'Card assistant');
+      router.push({
+        pathname: '/assistant',
+        params: { tab: target.tab, ...(target.bookingId ? { booking: String(target.bookingId) } : {}) },
+      });
       return;
     case 'googleProfile':
       notInAppYet(text, 'Google profile approvals');

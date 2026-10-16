@@ -6,16 +6,24 @@ import { colors, radius, spacing, touchTarget } from '@/constants/theme';
 
 import { useReviewTags } from './hooks';
 
-export function SearchBox({ value, onChange }: { value: string; onChange: (text: string) => void }) {
+export function SearchBox({
+  value,
+  onChange,
+  placeholder = 'Search reviews',
+}: {
+  value: string;
+  onChange: (text: string) => void;
+  placeholder?: string;
+}) {
   return (
     <View style={styles.search}>
       <Ionicons name="search" size={18} color={colors.textMuted} />
       <TextInput
         value={value}
         onChangeText={onChange}
-        placeholder="Search reviews"
+        placeholder={placeholder}
         placeholderTextColor={colors.textSubtle}
-        accessibilityLabel="Search reviews"
+        accessibilityLabel={placeholder}
         autoCorrect={false}
         returnKeyType="search"
         style={styles.input}

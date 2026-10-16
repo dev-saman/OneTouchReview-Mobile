@@ -25,4 +25,11 @@ describe('openTarget: reviews from other sites and Review Shield', () => {
     openTarget(router, { type: 'shieldFlag', id: 9 }, text);
     expect(router.push).toHaveBeenCalledWith({ pathname: '/review-shield/[id]', params: { id: '9' } });
   });
+
+  it('opens the Card assistant on a tab, at a booking', () => {
+    openTarget(router, { type: 'assistant', tab: 'bookings', bookingId: 4 }, text);
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/assistant', params: { tab: 'bookings', booking: '4' } });
+    openTarget(router, { type: 'assistant', tab: 'train', bookingId: null }, text);
+    expect(router.push).toHaveBeenLastCalledWith({ pathname: '/assistant', params: { tab: 'train' } });
+  });
 });

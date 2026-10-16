@@ -33,6 +33,9 @@ export default function AppLayout() {
         <Stack.Screen name="reviews/[id]" options={{ title: 'Review' }} />
         <Stack.Screen name="site-reviews/[id]" options={{ title: 'Review' }} />
         <Stack.Screen name="review-shield/[id]" options={{ title: 'Review Shield' }} />
+        <Stack.Screen name="assistant" options={{ title: 'Card assistant' }} />
+        <Stack.Screen name="assistant/[id]" options={{ title: 'Conversation' }} />
+        <Stack.Screen name="leads" options={{ title: 'Leads' }} />
         <Stack.Screen name="profile" options={{ title: 'Profile' }} />
         <Stack.Screen name="profile/confirm-email" options={{ title: 'Confirm email' }} />
         <Stack.Screen name="profile/password" options={{ title: 'Password' }} />
