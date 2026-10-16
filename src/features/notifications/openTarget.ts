@@ -12,11 +12,7 @@ type Text = { title: string | null; body: string | null };
 
 const message = (text: Text, extra?: string) => [text.body, extra].filter(Boolean).join('\n\n') || undefined;
 
-function notInAppYet(text: Text, feature: string) {
-  Alert.alert(text.title ?? feature, message(text, `${feature} isn’t in this version of the app yet.`));
-}
-
-/** Opens a bell item or a tapped push. The text is the item's title and body, shown where there is no screen. */
+/** Opens a bell item or a tapped push. The text is the item's title and body, shown for web-only and message-only items. */
 export function openTarget(router: ReturnType<typeof useRouter>, target: NotificationTarget, text: Text) {
   switch (target.type) {
     case 'feedback':
@@ -59,7 +55,13 @@ export function openTarget(router: ReturnType<typeof useRouter>, target: Notific
       });
       return;
     case 'googleProfile':
-      notInAppYet(text, 'Google profile approvals');
+      router.push({
+        pathname: '/google-profile',
+        params: {
+          ...(target.locationId ? { location_id: String(target.locationId) } : {}),
+          ...(target.changeId ? { change: String(target.changeId) } : {}),
+        },
+      });
       return;
     case 'reports':
       router.push({ pathname: '/reports', params: target.pointId ? { point: String(target.pointId) } : {} });

@@ -11,6 +11,7 @@ import { Screen } from '@/components/ui/Screen';
 import { can, ROLE_LABELS } from '@/config/permissions';
 import { colors, font, radius, shadow, spacing, touchTarget } from '@/constants/theme';
 import { useAssistantAvailable } from '@/features/assistant/access';
+import { useGoogleProfileAvailable } from '@/features/googleProfile/access';
 import { signOut } from '@/features/session/sessionThunks';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { appVersion } from '@/services/device/deviceInfo';
@@ -33,6 +34,7 @@ export default function MoreScreen() {
   const showAskAi = mayAskAi && ai.data === true;
   // Card assistant: hidden when the plan doesn't include it (403 PLAN_REQUIRED).
   const showAssistant = useAssistantAvailable() === true;
+  const showGoogleProfile = useGoogleProfileAvailable() === true;
 
   const confirmSignOut = () =>
     Alert.alert('Sign out?', 'You will need to sign in again on this phone.', [
@@ -72,6 +74,9 @@ export default function MoreScreen() {
         <MenuRow icon="people-outline" label="Leads" onPress={() => router.push('/leads')} />
         {showAssistant ? (
           <MenuRow icon="chatbubbles-outline" label="Card assistant" onPress={() => router.push('/assistant')} />
+        ) : null}
+        {showGoogleProfile ? (
+          <MenuRow icon="business-outline" label="Google profile" onPress={() => router.push('/google-profile')} />
         ) : null}
         <MenuRow icon="bar-chart-outline" label="Reports" onPress={() => router.push('/reports')} />
         {showAskAi ? <MenuRow icon="sparkles-outline" label="Ask AI" onPress={() => router.push('/ask-ai')} /> : null}

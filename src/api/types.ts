@@ -897,6 +897,8 @@ export type ChangeRisk = 'safe' | 'careful' | 'risky';
 export type GoogleProfileChange = {
   id: number;
   location_id: number;
+  /** e.g. description, primary_category, hours (response example). */
+  field?: string;
   field_label: string;
   risk?: ChangeRisk | string;
   /** Plain words: show these. */

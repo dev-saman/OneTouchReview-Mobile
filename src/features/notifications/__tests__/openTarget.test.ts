@@ -32,4 +32,9 @@ describe('openTarget: reviews from other sites and Review Shield', () => {
     openTarget(router, { type: 'assistant', tab: 'train', bookingId: null }, text);
     expect(router.push).toHaveBeenLastCalledWith({ pathname: '/assistant', params: { tab: 'train' } });
   });
+
+  it('opens Google profile approvals for a location with a change on top', () => {
+    openTarget(router, { type: 'googleProfile', locationId: 1497, changeId: 6 }, text);
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/google-profile', params: { location_id: '1497', change: '6' } });
+  });
 });

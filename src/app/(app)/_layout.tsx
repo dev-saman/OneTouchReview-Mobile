@@ -36,6 +36,7 @@ export default function AppLayout() {
         <Stack.Screen name="assistant" options={{ title: 'Card assistant' }} />
         <Stack.Screen name="assistant/[id]" options={{ title: 'Conversation' }} />
         <Stack.Screen name="leads" options={{ title: 'Leads' }} />
+        <Stack.Screen name="google-profile" options={{ title: 'Google profile' }} />
         <Stack.Screen name="profile" options={{ title: 'Profile' }} />
         <Stack.Screen name="profile/confirm-email" options={{ title: 'Confirm email' }} />
         <Stack.Screen name="profile/password" options={{ title: 'Password' }} />
