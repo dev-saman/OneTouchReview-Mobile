@@ -10,10 +10,13 @@ import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { TextField } from '@/components/ui/TextField';
+import { can } from '@/config/permissions';
 import { colors, font, radius, spacing } from '@/constants/theme';
-import { cardChanges, formFromCard, type CardForm } from '@/features/card/cardForm';
+import { cardChanges, formFromCard, normalizeSlug, slugChange, type CardForm } from '@/features/card/cardForm';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { pickCardPhoto } from '@/services/photos/cardPhoto';
+import { useAppSelector } from '@/store/hooks';
 
 /** Screen 11: edit a card's text, links, address, on/off and photo (business or team card). */
 export default function EditCardScreen() {
@@ -46,15 +49,22 @@ function EditForm({ card: initial }: { card: DigitalCard }) {
   const setAddress = (field: keyof CardForm['address']) => (value: string) =>
     setForm((f) => ({ ...f, address: { ...f.address, [field]: value } }));
 
+  const role = useAppSelector((s) => s.auth.user?.role);
+  const isBusiness = card.kind === 'business';
+  // The business card's address: owners and managers (PUT /digital-cards/slug).
+  const canEditAddress = !isBusiness || can(role, 'businessCardAddress');
   const changes = cardChanges(card, form);
-  const dirty = Object.keys(changes).length > 0;
+  const newBusinessSlug = isBusiness && canEditAddress ? slugChange(card, form) : null;
+  const slugCheck = useSlugCheck(canEditAddress ? slugChange(card, form) : null);
+  const dirty = Object.keys(changes).length > 0 || newBusinessSlug !== null;
 
   const save = async () => {
-    if (!dirty || saving) return;
+    if (!dirty || saving || slugCheck.taken) return;
     setSaving(true);
     setError(null);
     try {
-      const updated = await cardsApi.update(card.id, changes);
+      if (newBusinessSlug) await cardsApi.setBusinessSlug(newBusinessSlug);
+      const updated = Object.keys(changes).length ? await cardsApi.update(card.id, changes) : card;
       setCard(updated);
       setForm(formFromCard(updated));
       Alert.alert('Card saved', 'Your card is updated.');
@@ -68,7 +78,7 @@ function EditForm({ card: initial }: { card: DigitalCard }) {
 
   const fe = (field: string) => fieldError(error, field);
   const shownFieldErrors = [
-    'name', 'title', 'bio', 'phone', 'email', 'website', 'booking_url', 'enabled',
+    'name', 'title', 'bio', 'phone', 'email', 'website', 'booking_url', 'enabled', 'slug',
     'address', 'address.line1', 'address.line2', 'address.city', 'address.state', 'address.zip',
   ].some((f) => fe(f));
 
@@ -89,6 +99,26 @@ function EditForm({ card: initial }: { card: DigitalCard }) {
           error={fe('bio')}
         />
       </Card>
+
+      {canEditAddress ? (
+        <Card title="Card address">
+          <TextField
+            label="Address"
+            value={form.slug}
+            onChangeText={(v) => set('slug')(normalizeSlug(v))}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="your-name"
+            hint={card.url ? `Now: ${card.url}` : 'Letters, numbers and hyphens.'}
+            error={fe('slug') ?? (slugCheck.taken ? slugCheck.reason : undefined)}
+          />
+          {slugCheck.available ? <Text style={styles.ok}>This address is free.</Text> : null}
+          {slugCheck.taken && slugCheck.suggestion ? (
+            <Button title={`Use ${slugCheck.suggestion}`} variant="text" onPress={() => set('slug')(slugCheck.suggestion!)} />
+          ) : null}
+          <Text style={font.caption}>Changing it changes the card’s link. Printed QR codes and NFC tags keep working (they use the short link).</Text>
+        </Card>
+      ) : null}
 
       <Card title="Contact and links">
         <TextField label="Phone" value={form.phone} onChangeText={set('phone')} keyboardType="phone-pad" error={fe('phone')} />
@@ -156,9 +186,26 @@ function EditForm({ card: initial }: { card: DigitalCard }) {
           {error.message}
         </Text>
       ) : null}
-      <Button title="Save changes" onPress={save} loading={saving} disabled={!dirty} />
+      <Button title="Save changes" onPress={save} loading={saving} disabled={!dirty || slugCheck.taken} />
     </Screen>
   );
+}
+
+/** GET /digital-cards/slug-available for a new address, after typing stops. */
+function useSlugCheck(slug: string | null) {
+  const debounced = useDebouncedValue(slug, 400);
+  const fetcher = useCallback(
+    (signal: AbortSignal) => (debounced ? cardsApi.slugAvailable(debounced, signal) : Promise.resolve(null)),
+    [debounced],
+  );
+  const q = useApiQuery(`slug|${debounced ?? ''}`, fetcher);
+  const answer = slug && slug === debounced ? q.data : null;
+  return {
+    available: answer?.available === true,
+    taken: answer?.available === false,
+    reason: answer?.reason || 'This address is taken.',
+    suggestion: answer?.suggestion && answer.suggestion !== slug ? answer.suggestion : null,
+  };
 }
 
 function PhotoSection({ card, onUploaded }: { card: DigitalCard; onUploaded: (card: DigitalCard) => void }) {
@@ -212,6 +259,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, gap: spacing.xs },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   error: { color: colors.danger, fontSize: 14 },
+  ok: { color: colors.success, fontSize: 14 },
   photoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
   photo: { width: 88, height: 88, borderRadius: radius.lg, backgroundColor: colors.background },
   photoEmpty: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },

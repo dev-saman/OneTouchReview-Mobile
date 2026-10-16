@@ -9,6 +9,7 @@ export type Capability =
   | 'askAi' // "Ask AI for owners and managers"
   | 'ownerReport' // /settings/owner-report/preview "Owners and managers"
   | 'accountNotifications' // bell kinds for owners and managers
+  | 'businessCardAddress' // PUT /digital-cards/slug "Owners and managers"
   | 'managerDashboard' // Dashboard tab rows marked * and the Card assistant training (owners and managers)
   | 'manageReviews'; // site review replies, new review tags, AI summary refresh (Endpoints rows 73, 74, 77, 79)
 
@@ -19,6 +20,7 @@ const RULES: Record<Capability, readonly Role[]> = {
   askAi: OWNER_AND_MANAGER,
   ownerReport: OWNER_AND_MANAGER,
   accountNotifications: OWNER_AND_MANAGER,
+  businessCardAddress: OWNER_AND_MANAGER,
   managerDashboard: OWNER_AND_MANAGER,
   manageReviews: OWNER_AND_MANAGER,
 };
