@@ -1,7 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { AI_DRAFT_STATUS, reviewsApi, waitingDraftText, type ReviewStatus } from '@/api/reviews.api';
 import type { GoogleReview, ReviewsPage } from '@/api/types';
@@ -10,9 +9,15 @@ import { Chips } from '@/components/ui/Chips';
 import { ListFooter } from '@/components/ui/ListFooter';
 import { Stars } from '@/components/ui/Stars';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
-import { colors, font, radius, spacing, touchTarget } from '@/constants/theme';
+import { colors, font, spacing } from '@/constants/theme';
 import { selectSelectedLocation } from '@/features/location/selectors';
 import { changeLabel } from '@/features/reviews/changes';
+import { useSiteTabs } from '@/features/reviews/hooks';
+import { listStyles, SearchBox, TagFilter } from '@/features/reviews/ListControls';
+import { SiteReviewsList } from '@/features/reviews/SiteReviewsList';
+import { GOOGLE_TAB, siteTabs } from '@/features/reviews/sites';
+import { SummaryCard } from '@/features/reviews/SummaryCard';
+import { TagBadges } from '@/features/reviews/TagsCard';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { usePagedList } from '@/hooks/usePagedList';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
@@ -54,17 +59,55 @@ type Summary = Pick<
   'filtered_total' | 'need_reply_count' | 'negative_count' | 'ai_drafts' | 'avg_rating' | 'changed_count'
 >;
 
-/** Screen 4: Google reviews with filters (rating, AI drafts, search). */
+/**
+ * Screen 4: Reviews. A Google tab plus one tab per connected review site, built from the API
+ * (by_profile): a site the server adds later appears by itself. 503 SITE_REVIEWS_OFF: Google only.
+ * Opened with ?status= (Google filter) or ?source={platform}&profile_id= (a site's tab).
+ */
 export default function ReviewsScreen() {
   const location = useAppSelector(selectSelectedLocation);
   if (location === null) return <EmptyState title="No reviews yet" />;
-  return <ReviewsList location={location} />;
+  return <ReviewsTabs location={location} />;
 }
 
-function ReviewsList({ location }: { location: LocationSelection }) {
+function ReviewsTabs({ location }: { location: LocationSelection }) {
+  const params = useLocalSearchParams<{ status?: string; source?: string; profile_id?: string }>();
+  const opened = params.source && params.source !== GOOGLE_TAB ? params.source : null;
+  const sites = useSiteTabs(location);
+  const [tab, setTab] = useState(opened ?? GOOGLE_TAB);
+
+  const tabs = [...sites.tabs];
+  // A push can name a site before its tab has loaded.
+  if (tab !== GOOGLE_TAB && !tabs.some((t) => t.key === tab)) tabs.push(...siteTabs([{ platform: tab }]));
+  const current = tabs.find((t) => t.key === tab);
+
+  return (
+    <View style={listStyles.screen}>
+      {tabs.length ? (
+        <View style={styles.tabs}>
+          <Chips options={[{ value: GOOGLE_TAB, label: 'Google' }, ...tabs.map((t) => ({ value: t.key, label: t.label }))]} value={tab} onChange={setTab} />
+        </View>
+      ) : null}
+      {current ? (
+        <SiteReviewsList
+          key={current.key}
+          location={location}
+          platform={current.key}
+          label={current.label}
+          profileId={current.key === opened && /^\d+$/.test(params.profile_id ?? '') ? Number(params.profile_id) : undefined}
+          byProfile={sites.byProfile}
+        />
+      ) : (
+        <GoogleReviewsList location={location} status={params.status} />
+      )}
+    </View>
+  );
+}
+
+function GoogleReviewsList({ location, status }: { location: LocationSelection; status?: string }) {
   const router = useRouter();
-  const params = useLocalSearchParams<{ status?: string }>();
-  const [filter, setFilter] = useState<Filter>(filterForParam(params.status));
+  const [filter, setFilter] = useState<Filter>(filterForParam(status));
+  const [tagId, setTagId] = useState<number | null>(null);
   const [query, setQuery] = useState('');
   const search = useDebouncedValue(query.trim(), 350);
 
@@ -77,6 +120,7 @@ function ReviewsList({ location }: { location: LocationSelection }) {
           search,
           status: statusFor(filter),
           rating: /^[1-5]$/.test(filter) ? Number(filter) : undefined,
+          tagId: tagId ?? undefined,
         },
         signal,
       );
@@ -94,28 +138,18 @@ function ReviewsList({ location }: { location: LocationSelection }) {
         meta: summary,
       };
     },
-    [location, filter, search],
+    [location, filter, tagId, search],
   );
-  const list = usePagedList(`${location}|${filter}|${search}`, load);
+  const list = usePagedList(`${location}|${filter}|${tagId}|${search}`, load);
   useRefreshOnFocus(list.refresh);
+  const filtered = filter !== 'all' || tagId !== null || !!search;
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.controls}>
-        <View style={styles.search}>
-          <Ionicons name="search" size={18} color={colors.textMuted} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search reviews"
-            placeholderTextColor={colors.textSubtle}
-            accessibilityLabel="Search reviews"
-            autoCorrect={false}
-            returnKeyType="search"
-            style={styles.searchInput}
-          />
-        </View>
+    <View style={listStyles.screen}>
+      <View style={listStyles.controls}>
+        <SearchBox value={query} onChange={setQuery} />
         <Chips options={FILTERS} value={filter} onChange={setFilter} />
+        <TagFilter value={tagId} onChange={setTagId} />
         {list.meta ? <SummaryLine summary={list.meta} /> : null}
       </View>
       {list.loading ? (
@@ -126,16 +160,23 @@ function ReviewsList({ location }: { location: LocationSelection }) {
         <FlatList
           data={list.items}
           keyExtractor={(r) => String(r.id)}
+          ListHeaderComponent={
+            filtered ? null : (
+              <View style={listStyles.header}>
+                <SummaryCard location={location} source="all" />
+              </View>
+            )
+          }
           renderItem={({ item }) => (
             <Row item={item} onPress={() => router.push({ pathname: '/reviews/[id]', params: { id: String(item.id) } })} />
           )}
           ItemSeparatorComponent={Separator}
-          contentContainerStyle={list.items.length ? undefined : styles.empty}
+          contentContainerStyle={list.items.length ? undefined : listStyles.empty}
           ListEmptyComponent={
             <EmptyState
               icon="star-outline"
               title={
-                search
+                search || tagId !== null
                   ? 'No matches'
                   : filter === 'ai'
                     ? 'No AI drafts waiting'
@@ -198,9 +239,9 @@ function Row({ item, onPress }: { item: GoogleReview; onPress: () => void }) {
   const replied = !!item.reply_comment;
   const hasDraft = !!waitingDraftText(item.ai_reply);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      <View style={styles.rowTop}>
-        <Text style={styles.name} numberOfLines={1}>
+    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [listStyles.row, pressed && listStyles.pressed]}>
+      <View style={listStyles.rowTop}>
+        <Text style={listStyles.name} numberOfLines={1}>
           {item.reviewer_name || 'Google user'}
         </Text>
         <Stars rating={item.rating} />
@@ -212,7 +253,7 @@ function Row({ item, onPress }: { item: GoogleReview; onPress: () => void }) {
       ) : (
         <Text style={font.small}>Rating only, no comment.</Text>
       )}
-      <View style={styles.rowMeta}>
+      <View style={listStyles.rowMeta}>
         {item.removed_at ? (
           <Badge label="Removed from Google" tone="danger" />
         ) : (
@@ -222,6 +263,7 @@ function Row({ item, onPress }: { item: GoogleReview; onPress: () => void }) {
         {item.last_change && !item.removed_at ? (
           <Badge label={changeLabel(item.last_change.kind, item.last_change.old_rating, item.last_change.new_rating)} />
         ) : null}
+        <TagBadges tags={item.tags} />
         <Text style={font.caption}>{[item.location?.name, formatDate(item.review_time)].filter(Boolean).join(' · ')}</Text>
       </View>
     </Pressable>
@@ -229,38 +271,12 @@ function Row({ item, onPress }: { item: GoogleReview; onPress: () => void }) {
 }
 
 function Separator() {
-  return <View style={styles.separator} />;
+  return <View style={listStyles.separator} />;
 }
 
 const styles = StyleSheet.create({
+  tabs: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, backgroundColor: colors.surface },
   summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   average: { fontSize: 36, fontWeight: '800', color: colors.text },
   summaryText: { flex: 1, gap: 2 },
-  screen: { flex: 1, backgroundColor: colors.background },
-  controls: {
-    padding: spacing.lg,
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: touchTarget,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  searchInput: { flex: 1, fontSize: 16, color: colors.text, paddingVertical: spacing.sm },
-  row: { minHeight: touchTarget + 16, padding: spacing.lg, gap: spacing.xs, backgroundColor: colors.surface },
-  pressed: { backgroundColor: colors.background },
-  rowTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
-  name: { flex: 1, fontSize: 16, fontWeight: '600', color: colors.text },
-  rowMeta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, marginTop: 2 },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: spacing.lg },
-  empty: { flexGrow: 1 },
 });

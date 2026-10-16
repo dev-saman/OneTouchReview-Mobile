@@ -24,6 +24,8 @@ export type SiteReviewsQuery = {
   tagId?: number;
   search?: string;
   page: number;
+  /** ≤ 100, default 25. per_page=1 reads only by_profile (tabs, dashboard). */
+  perPage?: number;
 };
 
 /** POST /site-reviews/{id}/reply: 1–4000 characters. */
@@ -33,7 +35,7 @@ export const TAGS_PER_REVIEW_MAX = 10;
 
 /** Endpoints tab, rows "4 Reviews (all sites)". 503 SITE_REVIEWS_OFF: show Google only. */
 export const siteReviewsApi = {
-  list: ({ location, platform, profileId, rating, tagId, search, page }: SiteReviewsQuery, signal?: AbortSignal) =>
+  list: ({ location, platform, profileId, rating, tagId, search, page, perPage }: SiteReviewsQuery, signal?: AbortSignal) =>
     network.get<SiteReviewsPage>(Paths.siteReviews, {
       signal,
       params: {
@@ -44,6 +46,7 @@ export const siteReviewsApi = {
         tag_id: tagId,
         search: search?.trim() || undefined,
         page,
+        per_page: perPage,
       },
     }),
 

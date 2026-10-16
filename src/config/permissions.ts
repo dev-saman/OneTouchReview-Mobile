@@ -8,7 +8,8 @@ export type Capability =
   | 'resend' // Endpoints: "Resend link (owners, managers)"
   | 'askAi' // "Ask AI for owners and managers"
   | 'ownerReport' // /settings/owner-report/preview "Owners and managers"
-  | 'accountNotifications'; // bell kinds for owners and managers
+  | 'accountNotifications' // bell kinds for owners and managers
+  | 'manageReviews'; // site review replies, new review tags, AI summary refresh (Endpoints rows 73, 74, 77, 79)
 
 const OWNER_AND_MANAGER: readonly Role[] = ['owner', 'manager'];
 
@@ -17,6 +18,7 @@ const RULES: Record<Capability, readonly Role[]> = {
   askAi: OWNER_AND_MANAGER,
   ownerReport: OWNER_AND_MANAGER,
   accountNotifications: OWNER_AND_MANAGER,
+  manageReviews: OWNER_AND_MANAGER,
 };
 
 export function can(role: Role | null | undefined, capability: Capability): boolean {
