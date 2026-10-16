@@ -13,6 +13,7 @@ import { colors, font, spacing, touchTarget } from '@/constants/theme';
 import { assignedName, channelLabel, chatTitle, preview } from '@/features/chats/format';
 import { selectSelectedLocation } from '@/features/location/selectors';
 import { usePagedList } from '@/hooks/usePagedList';
+import { useChatEventsRefresh } from '@/features/realtime/RealtimeProvider';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
@@ -52,6 +53,8 @@ function ChatsInbox({ location }: { location: LocationSelection }) {
   );
   const list = usePagedList<Chat, { unreadTotal: number }, string>(`${location}|${status}|${assigned}`, load);
   useRefreshOnFocus(list.refresh);
+  // Realtime: any new message or change in the business's chats reloads the inbox.
+  useChatEventsRefresh(list.refresh);
 
   // "Inbox with unread badge": unread_total on the Chats tab.
   const unreadTotal = list.meta?.unreadTotal ?? 0;

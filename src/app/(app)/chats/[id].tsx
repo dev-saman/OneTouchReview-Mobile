@@ -26,6 +26,7 @@ import { AssignSheet } from '@/features/chats/AssignSheet';
 import { assignedName, channelLabel, chatTitle, deliveryLabel, textOrNull } from '@/features/chats/format';
 import { useOutbox, type OutgoingMessage } from '@/features/chats/useOutbox';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
+import { useChatEventsRefresh } from '@/features/realtime/RealtimeProvider';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import { formatDateTime, formatRelative, isFuture } from '@/utils/format';
 
@@ -46,6 +47,8 @@ export default function ChatScreen() {
   );
   const { data, error, loading, refreshing, reload, refresh } = useApiQuery(chatId, fetcher);
   useRefreshOnFocus(refresh);
+  // Realtime: chat.message / chat.updated for this chat re-fetches it (API-GAPS #2).
+  useChatEventsRefresh(refresh, (event) => event.chatId === chatId);
 
   // Replies sent from this screen, until the next load includes them; plus status changes.
   const [sent, setSent] = useState<ChatMessage[]>([]);
