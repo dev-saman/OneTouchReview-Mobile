@@ -10,26 +10,35 @@ import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { can } from '@/config/permissions';
 import { colors, font, radius, spacing } from '@/constants/theme';
 import { selectSelectedLocation } from '@/features/location/selectors';
+import { AttributionTab } from '@/features/reports/AttributionTab';
+import { FollowUpsTab } from '@/features/reports/FollowUpsTab';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
 import { formatDate, formatRating } from '@/utils/format';
 
-type Tab = 'points' | 'insights' | 'report';
+type Tab = 'points' | 'insights' | 'attribution' | 'followups' | 'report';
 
-/** Screen 12: what people like / don't like, insights, and the weekly report (owners and managers). */
+const TAB_PARAMS: Tab[] = ['points', 'insights', 'attribution', 'followups', 'report'];
+
+/**
+ * Screen 12: what people like / don't like, insights, reviews from your requests, follow-up
+ * results, and the weekly report (owners and managers). ?tab= opens a tab, ?point= a like/dislike.
+ */
 export default function ReportsScreen() {
   const location = useAppSelector(selectSelectedLocation);
   const role = useAppSelector((s) => s.auth.user?.role);
   // The bell's review_point_alert opens this screen with ?point={id}.
-  const { point } = useLocalSearchParams<{ point?: string }>();
-  const [tab, setTab] = useState<Tab>('points');
+  const { point, tab: tabParam } = useLocalSearchParams<{ point?: string; tab?: string }>();
+  const [tab, setTab] = useState<Tab>(TAB_PARAMS.find((t) => t === tabParam && (t !== 'report' || can(role, 'ownerReport'))) ?? 'points');
 
   if (location === null) return <EmptyState title="No reports yet" />;
   const tabs: { value: Tab; label: string }[] = [
     { value: 'points', label: 'Likes & dislikes' },
     { value: 'insights', label: 'Insights' },
+    { value: 'attribution', label: 'From your requests' },
+    { value: 'followups', label: 'Follow-ups' },
     ...(can(role, 'ownerReport') ? [{ value: 'report' as const, label: 'Weekly report' }] : []),
   ];
 
@@ -42,6 +51,10 @@ export default function ReportsScreen() {
         <PointsTab location={location} highlight={point ? Number(point) : null} />
       ) : tab === 'insights' ? (
         <InsightsTab location={location} />
+      ) : tab === 'attribution' ? (
+        <AttributionTab location={location} />
+      ) : tab === 'followups' ? (
+        <FollowUpsTab location={location} />
       ) : (
         <ReportTab />
       )}

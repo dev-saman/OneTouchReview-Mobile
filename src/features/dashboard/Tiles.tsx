@@ -185,7 +185,11 @@ export function AttributionTile({ location }: { location: LocationSelection }) {
   const reviews = q.data?.reviews;
   if (!reviews || reviews.total === 0) return null;
   return (
-    <Tile title="Reviews from your requests" onPress={() => router.push('/reports')} hint="Opens Reports">
+    <Tile
+      title="Reviews from your requests"
+      onPress={() => router.push({ pathname: '/reports', params: { tab: 'attribution' } })}
+      hint="Opens Reports"
+    >
       <Text style={font.body}>
         {reviews.likely.total} of {reviews.total} new Google reviews likely came from your requests or cards (last 30 days).
       </Text>
