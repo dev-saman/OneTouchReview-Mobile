@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { cardsApi } from '@/api/cards.api';
@@ -13,13 +12,13 @@ import { Chips } from '@/components/ui/Chips';
 import { LAUNCH_COLORS } from '@/components/ui/LaunchScreen';
 import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, radius, shadow, spacing } from '@/constants/theme';
+import { CardQr } from '@/features/card/CardQr';
+import { cardLabel, defaultShareCard, shareableCards } from '@/features/card/shareCard';
+import { ShareSheet } from '@/features/card/ShareSheet';
+import { selectSelectedLocation } from '@/features/location/selectors';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
-import { cancelWrite, nfcAvailability, openNfcSettings, writeUriToTag } from '@/services/nfc/nfc';
-
-const QR_LOGO = require('../../../assets/images/brand-mark.png');
-
-const cardLabel = (c: DigitalCard) => c.name || (c.kind === 'business' ? 'Business card' : 'Team card');
+import { useAppSelector } from '@/store/hooks';
 
 /** Screen 8: show the card's QR code, share the link, write it to a blank NFC card or sticker. */
 export default function MyCardScreen() {
@@ -27,16 +26,18 @@ export default function MyCardScreen() {
   const { data, error, loading, refreshing, reload, refresh } = useApiQuery('cards', fetcher);
   useRefreshOnFocus(refresh);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const location = useAppSelector(selectSelectedLocation);
 
   if (loading) return <LoadingView />;
   if (!data) return error ? <ErrorState error={error} onRetry={reload} /> : null;
 
-  const cards = data.filter((c) => !!c.short_url);
+  const cards = shareableCards(data);
   if (cards.length === 0) {
     return <EmptyState title="No card yet" message="Set up your digital card on the web, then it shows here." />;
   }
-  // The business card first; the API doesn't say which card is the signed-in user's own.
-  const card = cards.find((c) => c.id === selectedId) ?? cards.find((c) => c.kind === 'business') ?? cards[0];
+  // Dashboard tab tile 3: the chosen location's card, then the business card.
+  const card = cards.find((c) => c.id === selectedId) ?? defaultShareCard(cards, location) ?? cards[0];
 
   return (
     <ScrollView
@@ -50,18 +51,16 @@ export default function MyCardScreen() {
           onChange={(v) => setSelectedId(Number(v))}
         />
       ) : null}
-      <CardView card={card} />
+      <CardView card={card} onShare={() => setSharing(true)} />
+      {sharing ? <ShareSheet cards={cards} initialId={card.id} onClose={() => setSharing(false)} /> : null}
     </ScrollView>
   );
 }
 
-function CardView({ card }: { card: DigitalCard }) {
+function CardView({ card, onShare }: { card: DigitalCard; onShare: () => void }) {
   const router = useRouter();
   const url = card.short_url!;
   const stats = card.stats_30d;
-
-  const share = () =>
-    Share.share(Platform.OS === 'ios' ? { url } : { message: url }, { dialogTitle: 'Share your card' }).catch(() => {});
 
   return (
     <>
@@ -74,20 +73,7 @@ function CardView({ card }: { card: DigitalCard }) {
           <Badge label={!card.enabled ? 'This card is turned off' : 'Not live yet'} tone="warning" />
         ) : null}
         <View style={styles.qr} accessible accessibilityLabel={`QR code for ${url}`}>
-          {/* ecl H: the logo in the middle covers part of the code, high error correction keeps it scannable. */}
-          <QRCode
-            value={url}
-            size={220}
-            backgroundColor="#FFFFFF"
-            color="#000000"
-            ecl="H"
-            quietZone={10}
-            logo={QR_LOGO}
-            logoSize={44}
-            logoBackgroundColor="#FFFFFF"
-            logoMargin={4}
-            logoBorderRadius={8}
-          />
+          <CardQr url={url} size={220} />
         </View>
         <Text style={[styles.cardCaption, styles.center]}>Let people scan this QR code to leave you a review</Text>
         <Text style={[styles.url, styles.center]} selectable>
@@ -95,8 +81,7 @@ function CardView({ card }: { card: DigitalCard }) {
         </Text>
       </View>
 
-      <Button title="Share link" icon="share-social-outline" onPress={share} />
-      <NfcWriter url={url} />
+      <Button title="Share card" icon="share-social-outline" onPress={onShare} accessibilityHint="QR code, share link, NFC and copy link" />
       {card.can_edit ? (
         <Button
           title="Edit card"
@@ -119,50 +104,6 @@ function CardView({ card }: { card: DigitalCard }) {
       <Text style={[font.caption, styles.center]}>
         Phones can’t pass a link to another phone by tapping. Use the QR code or Share link for that.
       </Text>
-    </>
-  );
-}
-
-/** Writes short_url as an NDEF URI record. iPhone shows its own sheet; Android gets ours. */
-function NfcWriter({ url }: { url: string }) {
-  const [waiting, setWaiting] = useState(false);
-
-  const write = async () => {
-    const availability = await nfcAvailability();
-    if (availability === 'unsupported') {
-      Alert.alert('NFC not available', 'This phone can’t write NFC tags. Use the QR code or Share link instead.');
-      return;
-    }
-    if (availability === 'disabled') {
-      Alert.alert('Turn on NFC', 'NFC is off on this phone.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Open settings', onPress: openNfcSettings },
-      ]);
-      return;
-    }
-    if (Platform.OS === 'android') setWaiting(true);
-    const result = await writeUriToTag(url);
-    setWaiting(false);
-    if (result.ok) {
-      if (Platform.OS === 'android') Alert.alert('Done', 'Your card link is on the tag. Tap it with a phone to try it.');
-    } else if (!result.cancelled && Platform.OS === 'android') {
-      // iOS shows its own error in the system sheet.
-      Alert.alert('Couldn’t write the tag', 'Use a blank, writable NFC card or sticker and hold it still against the phone.');
-    }
-  };
-
-  return (
-    <>
-      <Button title="Write to NFC card or sticker" variant="secondary" icon="radio-outline" onPress={write} />
-      <Modal visible={waiting} transparent animationType="fade" onRequestClose={cancelWrite}>
-        <View style={styles.backdrop}>
-          <View style={styles.sheet}>
-            <Text style={font.heading}>Ready to write</Text>
-            <Text style={[font.body, styles.center]}>Hold a blank NFC card or sticker against the back of your phone.</Text>
-            <Button title="Cancel" variant="secondary" onPress={cancelWrite} />
-          </View>
-        </View>
-      </Modal>
     </>
   );
 }
@@ -205,18 +146,9 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
   cardCaption: { fontSize: 13, color: 'rgba(255,255,255,0.9)' },
   center: { textAlign: 'center' },
-  qr: { padding: spacing.sm, marginVertical: spacing.sm, backgroundColor: '#FFFFFF', borderRadius: radius.lg },
+  qr: { padding: spacing.sm, marginVertical: spacing.sm, backgroundColor: colors.qrLight, borderRadius: radius.lg },
   url: { fontSize: 14, fontWeight: '600', color: colors.onPrimary },
   stats: { flexDirection: 'row', justifyContent: 'space-between' },
   stat: { alignItems: 'center', flex: 1 },
   statValue: { fontSize: 22, fontWeight: '700', color: colors.text },
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.5)', justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    padding: spacing.xl,
-    gap: spacing.lg,
-    alignItems: 'center',
-  },
 });

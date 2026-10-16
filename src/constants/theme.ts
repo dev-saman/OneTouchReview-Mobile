@@ -23,6 +23,11 @@ export const colors = {
   successSurface: '#F0FDF4',
   info: '#2563EB',
   infoSoft: '#EAF1FE',
+  /** QR codes stay black on white whatever the theme, so every scanner reads them. */
+  qrDark: '#000000',
+  qrLight: '#FFFFFF',
+  /** Dimmed backdrop behind sheets. */
+  scrim: 'rgba(15,23,42,0.5)',
 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
