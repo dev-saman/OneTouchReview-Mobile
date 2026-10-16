@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge, Card } from '@/components/ui/Card';
 import { colors, font, spacing } from '@/constants/theme';
 import { can } from '@/config/permissions';
+import { useTileRefresh } from '@/features/dashboard/refresh';
 import { toApiError, useApiQuery } from '@/hooks/useApiQuery';
 import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
@@ -16,10 +17,22 @@ import { formatDate } from '@/utils/format';
  * AI summary at the top of Reviews (GET /reviews/summary). Hidden while loading, on any error and
  * when summary is null (not enough reviews, AI off). Owners and managers can make it again now.
  */
-export function SummaryCard({ location, source }: { location: LocationSelection; source: SummarySource }) {
+export function SummaryCard({
+  location,
+  source,
+  compact = false,
+  onOpen,
+}: {
+  location: LocationSelection;
+  source: SummarySource;
+  /** Dashboard row 8: chips first, the text behind "Read more", no update button. */
+  compact?: boolean;
+  onOpen?: () => void;
+}) {
   const role = useAppSelector((s) => s.auth.user?.role);
   const fetcher = useCallback((signal: AbortSignal) => reviewExtrasApi.summary(location, source, signal), [location, source]);
   const q = useApiQuery(`reviews-summary|${location}|${source}`, fetcher);
+  useTileRefresh(q.refresh);
   const [fresh, setFresh] = useState<{ for: unknown; answer: ReviewsSummary } | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -41,19 +54,26 @@ export function SummaryCard({ location, source }: { location: LocationSelection;
 
   return (
     <Card title="What people say">
-      <Text style={font.body} numberOfLines={expanded ? undefined : 3}>
-        {summary.text}
-      </Text>
-      {summary.text.length > 140 ? (
+      {compact ? null : (
+        <Text style={font.body} numberOfLines={expanded ? undefined : 3}>
+          {summary.text}
+        </Text>
+      )}
+      {!compact && summary.text.length > 140 ? (
         <Button title={expanded ? 'Show less' : 'Read more'} variant="text" onPress={() => setExpanded((v) => !v)} />
       ) : null}
       {summary.praised.length ? <Line label="Praised" items={summary.praised} tone="success" /> : null}
       {summary.complaints.length ? <Line label="Complaints" items={summary.complaints} tone="warning" /> : null}
+      {compact && expanded ? <Text style={font.body}>{summary.text}</Text> : null}
+      {compact ? (
+        <Button title={expanded ? 'Show less' : 'Read more'} variant="text" onPress={() => setExpanded((v) => !v)} />
+      ) : null}
       <Text style={font.caption}>
         Based on {summary.based_on.reviews} {summary.based_on.reviews === 1 ? 'review' : 'reviews'}, {formatDate(summary.based_on.from)} –{' '}
         {formatDate(summary.based_on.to)}
       </Text>
-      {can(role, 'manageReviews') ? <Button title="Update summary" variant="text" onPress={remake} loading={busy} /> : null}
+      {!compact && can(role, 'manageReviews') ? <Button title="Update summary" variant="text" onPress={remake} loading={busy} /> : null}
+      {onOpen ? <Button title="See reviews" variant="secondary" onPress={onOpen} /> : null}
     </Card>
   );
 }

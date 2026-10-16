@@ -47,10 +47,11 @@ function statusFor(filter: Filter): ReviewStatus | undefined {
   return undefined;
 }
 
-/** Opened with ?status= from the bell or a push: ai-draft, or changed (a roll-up of changed reviews). */
+/** Opened with ?status= from the bell, a push or the dashboard: ai-draft, no-reply, or changed (a roll-up). */
 function filterForParam(status: string | undefined): Filter {
   if (status === AI_DRAFT_STATUS) return 'ai';
   if (status === 'changed') return 'changed';
+  if (status === 'no-reply') return 'no-reply';
   return 'all';
 }
 

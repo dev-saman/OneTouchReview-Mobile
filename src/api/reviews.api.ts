@@ -24,6 +24,8 @@ export type ReviewsQuery = {
   tagId?: number;
   search?: string;
   page: number;
+  /** per_page=1 reads only the counts (dashboard). */
+  perPage?: number;
 };
 
 /** Up to 2000 characters (Endpoints notes). */
@@ -33,10 +35,10 @@ export const COACH_MIN = 15;
 
 /** Endpoints tab, rows "4 Reviews". */
 export const reviewsApi = {
-  list: ({ location, status, rating, tagId, search, page }: ReviewsQuery, signal?: AbortSignal) =>
+  list: ({ location, status, rating, tagId, search, page, perPage }: ReviewsQuery, signal?: AbortSignal) =>
     network.get<ReviewsPage>(Paths.googleReviews, {
       signal,
-      params: { location_id: location, status, rating, tag_id: tagId, search: search?.trim() || undefined, page },
+      params: { location_id: location, status, rating, tag_id: tagId, search: search?.trim() || undefined, page, per_page: perPage },
     }),
 
   get: async (id: number, signal?: AbortSignal) =>

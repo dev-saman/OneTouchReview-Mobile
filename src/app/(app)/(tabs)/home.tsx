@@ -1,23 +1,28 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { dashboardApi } from '@/api/dashboard.api';
-import { Card, InfoRow } from '@/components/ui/Card';
-import { IconTile, type IconName, type TileTone } from '@/components/ui/IconTile';
-import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
-import { colors, font, radius, shadow, spacing } from '@/constants/theme';
-import { RequestRow } from '@/features/clients/RequestRow';
+import { EmptyState, ErrorState } from '@/components/ui/States';
+import { colors, font, spacing } from '@/constants/theme';
+import { NeedsYouTile } from '@/features/dashboard/NeedsYouTile';
+import { TileRefreshProvider, useTileRefresh } from '@/features/dashboard/refresh';
+import { AttributionTile, CardTile, MonthTile, NearbyTile, RatingTile, RecentTile, SitesTile } from '@/features/dashboard/Tiles';
 import { selectSelectedLocation } from '@/features/location/selectors';
 import { ProfileBanners } from '@/features/profile/ProfileBanners';
+import { SummaryCard } from '@/features/reviews/SummaryCard';
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
-import { formatDate, formatRating, greeting } from '@/utils/format';
+import { greeting } from '@/utils/format';
 
-/** Screen 7: numbers for the chosen location (location switcher in the header). */
+/**
+ * Screen 7, the dashboard (Sheet "Dashboard" tab). Every tile loads, fails and hides on its own, so
+ * one error never blanks the dashboard; pull to refresh reloads them all. The location switcher and
+ * the bell are in the header. Quick actions (row 2) wait for the owner's decision (no quick actions
+ * on Home since 2026-10-12).
+ */
 export default function HomeScreen() {
   const location = useAppSelector(selectSelectedLocation);
   if (location === null) {
@@ -29,37 +34,29 @@ export default function HomeScreen() {
       />
     );
   }
-  return <Dashboard location={location} />;
+  return <TileRefreshProvider>{(refreshAll) => <DashboardScreen location={location} refreshAll={refreshAll} />}</TileRefreshProvider>;
 }
 
-function Dashboard({ location }: { location: LocationSelection }) {
+function DashboardScreen({ location, refreshAll }: { location: LocationSelection; refreshAll: () => Promise<void> }) {
   const router = useRouter();
   const firstName = useAppSelector((s) => s.auth.user?.name)?.trim().split(/\s+/)[0];
+  const fetcher = useCallback((signal: AbortSignal) => dashboardApi.get(location, signal), [location]);
+  const q = useApiQuery(`dashboard|${location}`, fetcher);
+  useTileRefresh(q.refresh);
+  useRefreshOnFocus(refreshAll);
 
-  const fetcher = useCallback(
-    async (signal: AbortSignal) => {
-      const [dashboard, usage] = await Promise.all([
-        dashboardApi.get(location, signal),
-        // Usage is a bonus: if it fails, the dashboard still shows.
-        dashboardApi.usage(location, signal).catch(() => null),
-      ]);
-      return { dashboard, usage };
-    },
-    [location],
-  );
-  const { data, error, loading, refreshing, reload, refresh } = useApiQuery(location, fetcher);
-  useRefreshOnFocus(refresh);
-
-  if (loading) return <LoadingView />;
-  if (!data) return error ? <ErrorState error={error} onRetry={reload} /> : null;
-
-  const { stats, recent_requests: recent, urgent_feedback_7d: urgent } = data.dashboard;
-  const usage = data.usage;
+  const [pulling, setPulling] = useState(false);
+  const onPull = async () => {
+    setPulling(true);
+    await refreshAll();
+    setPulling(false);
+  };
+  const dashboard = q.data;
 
   return (
     <ScrollView
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={pulling} onRefresh={onPull} tintColor={colors.primary} />}
     >
       <View style={styles.hello}>
         <Text style={font.title} accessibilityRole="header">
@@ -70,145 +67,36 @@ function Dashboard({ location }: { location: LocationSelection }) {
 
       <ProfileBanners />
 
-      {urgent > 0 ? (
-        <Pressable
-          onPress={() => router.push({ pathname: '/feedback', params: { filter: 'urgent' } })}
-          accessibilityRole="button"
-          accessibilityHint="Opens urgent private feedback"
-          style={({ pressed }) => [styles.urgent, pressed && styles.pressed]}
-        >
-          <Ionicons name="alert-circle" size={20} color={colors.danger} />
-          <Text style={styles.urgentText}>
-            {urgent} urgent private feedback in the last 7 days
-          </Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.danger} />
-        </Pressable>
+      <NeedsYouTile location={location} dashboard={dashboard} />
+
+      {dashboard ? (
+        <>
+          <RatingTile location={location} dashboard={dashboard} />
+          <MonthTile location={location} dashboard={dashboard} />
+          <SitesTile location={location} dashboard={dashboard} />
+        </>
+      ) : q.error ? (
+        <ErrorState error={q.error} onRetry={q.reload} />
+      ) : (
+        <ActivityIndicator color={colors.primary} style={styles.loading} />
+      )}
+
+      <SummaryCard location={location} source="all" compact onOpen={() => router.push('/reviews')} />
+      <AttributionTile location={location} />
+      <CardTile location={location} />
+
+      {dashboard ? (
+        <>
+          <NearbyTile location={location} dashboard={dashboard} />
+          <RecentTile dashboard={dashboard} />
+        </>
       ) : null}
-
-      <View style={styles.grid}>
-        <Stat icon="people" label="Clients" value={String(stats.total_customers)} />
-        <Stat icon="paper-plane" tone="info" label="Requests sent" value={String(stats.total_requests_sent)} />
-        <Stat icon="chatbubble-ellipses" label="Responses" value={String(stats.total_responses)} />
-        {/* The API sends 0 when there are no responses yet. */}
-        <Stat
-          icon="star"
-          tone="accent"
-          label="Average rating"
-          value={stats.total_responses > 0 ? formatRating(stats.avg_rating) : '—'}
-        />
-        <Stat
-          icon="logo-google"
-          tone="info"
-          label="Google reviews"
-          value={stats.google_connected ? String(stats.google_reviews_count) : '—'}
-          note={stats.google_connected ? undefined : 'Not connected'}
-        />
-        <Stat
-          icon="mail"
-          label="Messages this month"
-          value={String(stats.current_period_messages_used)}
-          note={stats.messages_quota ? `of ${stats.messages_quota}` : undefined}
-        />
-      </View>
-
-      {usage ? (
-        <Card title="Activity">
-          <Text style={font.caption}>
-            {formatDate(usage.period.from)} – {formatDate(usage.period.to)}, compared with the period before
-          </Text>
-          <InfoRow label="Requests sent" value={withPrevious(usage.requests.sent, usage.requests.previous_sent)} />
-          <InfoRow label="Follow-ups sent" value={String(usage.requests.follow_ups_sent)} />
-          <InfoRow
-            label="Review page opens"
-            value={withPrevious(usage.clicks.page_opens, usage.clicks.previous_page_opens)}
-          />
-          <InfoRow
-            label="New Google reviews"
-            value={withPrevious(usage.google_reviews.new, usage.google_reviews.previous_new)}
-          />
-        </Card>
-      ) : null}
-
-      <Card title="Recent requests">
-        {recent.length === 0 ? (
-          <Text style={font.small}>No review requests yet.</Text>
-        ) : (
-          recent.map((request) => (
-            <RequestRow
-              key={request.id}
-              request={request}
-              title={request.customer?.name}
-              onPress={
-                request.customer
-                  ? () => router.push({ pathname: '/client/[id]', params: { id: String(request.customer!.id) } })
-                  : undefined
-              }
-            />
-          ))
-        )}
-      </Card>
     </ScrollView>
-  );
-}
-
-function withPrevious(current: number, previous: number) {
-  return `${current} (before: ${previous})`;
-}
-
-function Stat({
-  icon,
-  tone = 'brand',
-  label,
-  value,
-  note,
-}: {
-  icon: IconName;
-  tone?: TileTone;
-  label: string;
-  value: string;
-  note?: string;
-}) {
-  return (
-    <View style={styles.stat} accessible accessibilityLabel={`${label}: ${value}${note ? ` ${note}` : ''}`}>
-      <IconTile name={icon} tone={tone} size={36} />
-      <View style={styles.statText}>
-        <Text style={font.small} numberOfLines={2}>
-          {label}
-        </Text>
-        <Text style={styles.statValue}>{value}</Text>
-        {note ? <Text style={font.caption}>{note}</Text> : null}
-      </View>
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   hello: { gap: spacing.xs, marginTop: spacing.xs },
-  urgent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.dangerSurface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  urgentText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.danger },
-  pressed: { opacity: 0.7 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  stat: {
-    flexGrow: 1,
-    flexBasis: '45%',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-    ...shadow,
-  },
-  statText: { flex: 1, gap: 2 },
-  statValue: { fontSize: 24, fontWeight: '700', color: colors.text },
+  loading: { padding: spacing.xl },
 });

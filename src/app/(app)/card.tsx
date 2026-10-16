@@ -102,7 +102,7 @@ function CardView({ card, onShare }: { card: DigitalCard; onShare: () => void })
         </Card>
       ) : null}
       <Text style={[font.caption, styles.center]}>
-        Phones can’t pass a link to another phone by tapping. Use the QR code or Share link for that.
+        Phones can’t pass a link to another phone by tapping. Use the QR code or Share card for that.
       </Text>
     </>
   );
