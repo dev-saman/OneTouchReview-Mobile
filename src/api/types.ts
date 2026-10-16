@@ -594,7 +594,7 @@ export type NotificationSeverity = 'urgent' | 'warning' | 'info';
 
 export type AppNotification = {
   id: number;
-  /** private_feedback, google_review, ai_drafts, review_point_alert, google_connection, integration, sms_registration, texts_low, not_sent */
+  /** Notifications tab, incl. the kinds added October 14 (site_review, assistant, google_profile …). */
   kind: string;
   severity: NotificationSeverity | string;
   title: string;
@@ -606,6 +606,8 @@ export type AppNotification = {
   location: LocationRef | null;
   /** null for rolled-up kinds. */
   subject: { type: string; id: number } | null;
+  /** e.g. assistant.handoff, google_profile.approval_needed; null for client items and older rows. */
+  event?: string | null;
   read_at: string | null;
   created_at: string;
   updated_at: string;

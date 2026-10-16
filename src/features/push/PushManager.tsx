@@ -1,7 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
+import { notificationsApi } from '@/api/notifications.api';
+import { selectSelectedLocation } from '@/features/location/selectors';
 import { useNotificationBadge } from '@/features/notifications/BadgeProvider';
+import { openTarget } from '@/features/notifications/openTarget';
+import { pushNotificationId, pushTarget } from '@/features/notifications/target';
 import {
   configurePush,
   nativePushToken,
@@ -11,10 +15,10 @@ import {
   pushPermission,
   requestPushPermission,
   takeLaunchPush,
+  type TappedPush,
 } from '@/services/push/push';
 import { useAppSelector } from '@/store/hooks';
 
-import { hrefForDeepLink } from './deepLink';
 import { registerDevice, resetDeviceRegistration } from './registerDevice';
 
 /**
@@ -23,7 +27,13 @@ import { registerDevice, resetDeviceRegistration } from './registerDevice';
  */
 export function PushManager() {
   const router = useRouter();
-  const { refresh: refreshBadge } = useNotificationBadge();
+  const { refresh: refreshBadge, setCount: setBadgeCount } = useNotificationBadge();
+  const location = useAppSelector(selectSelectedLocation);
+  // Read by the tap handler, which is set up once.
+  const locationRef = useRef(location);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
   // /app-config "push on/off".
   const pushEnabled = useAppSelector((s) => s.appConfig.config?.firebase_enabled === true);
 
@@ -53,15 +63,25 @@ export function PushManager() {
     };
   }, [pushEnabled]);
 
-  // Tapping a push opens data.deep_link — also when the tap launched the app.
+  // Tapping a push opens its item by data.type (Push tab) — also when the tap launched the app.
   useEffect(() => {
-    const open = (link: unknown) => {
-      const href = hrefForDeepLink(link);
-      if (href) router.push(href);
+    const open = (push: TappedPush | null) => {
+      if (!push) return;
+      // Account and assistant pushes stand for a bell item: mark it read.
+      const notificationId = pushNotificationId(push.data);
+      const selected = locationRef.current;
+      if (notificationId !== null && selected !== null) {
+        notificationsApi
+          .markRead(notificationId, selected)
+          .then((answer) => setBadgeCount(answer.unread_count))
+          .catch(() => {});
+      }
+      const target = pushTarget(push.data);
+      if (target) openTarget(router, target, { title: push.title, body: push.body });
     };
     takeLaunchPush().then(open).catch(() => {});
     return onPushTapped(open);
-  }, [router]);
+  }, [router, setBadgeCount]);
 
   // Build guide: refresh the bell count after a push arrives.
   useEffect(() => onPushReceived(refreshBadge), [refreshBadge]);

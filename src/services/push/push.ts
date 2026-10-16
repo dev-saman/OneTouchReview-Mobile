@@ -62,20 +62,26 @@ export function onPushTokenChange(listener: (token: string) => void) {
   return () => sub.remove();
 }
 
-/** A push was tapped: hands over data.deep_link (validated by the caller). */
-export function onPushTapped(listener: (deepLink: unknown) => void) {
-  const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-    listener(response.notification.request.content.data?.deep_link);
-  });
+/** A tapped push: its data (all strings per the Push tab, validated by the caller), title and body. */
+export type TappedPush = { data: Record<string, unknown>; title: string | null; body: string | null };
+
+const tapped = (response: Notifications.NotificationResponse): TappedPush => {
+  const content = response.notification.request.content;
+  return { data: (content.data ?? {}) as Record<string, unknown>, title: content.title ?? null, body: content.body ?? null };
+};
+
+/** A push was tapped. */
+export function onPushTapped(listener: (push: TappedPush) => void) {
+  const sub = Notifications.addNotificationResponseReceivedListener((response) => listener(tapped(response)));
   return () => sub.remove();
 }
 
 /** The push that launched the app, if any (cleared once read so it opens only once). */
-export async function takeLaunchPush(): Promise<unknown> {
+export async function takeLaunchPush(): Promise<TappedPush | null> {
   const response = await Notifications.getLastNotificationResponseAsync();
-  if (!response) return undefined;
+  if (!response) return null;
   await Notifications.clearLastNotificationResponseAsync().catch(() => {});
-  return response.notification.request.content.data?.deep_link;
+  return tapped(response);
 }
 
 /** A push arrived while the app is open. */

@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { notificationsApi } from '@/api/notifications.api';
-import { AI_DRAFT_STATUS } from '@/api/reviews.api';
 import type { AppNotification } from '@/api/types';
 import { Button } from '@/components/ui/Button';
 import { Chips } from '@/components/ui/Chips';
@@ -12,15 +11,13 @@ import { EmptyState, ErrorState, LoadingView } from '@/components/ui/States';
 import { colors, font, spacing, touchTarget } from '@/constants/theme';
 import { selectSelectedLocation } from '@/features/location/selectors';
 import { useNotificationBadge } from '@/features/notifications/BadgeProvider';
+import { openTarget } from '@/features/notifications/openTarget';
 import { notificationTarget } from '@/features/notifications/target';
 import { useNotificationsList } from '@/features/notifications/useNotificationsList';
 import { toApiError } from '@/hooks/useApiQuery';
 import type { LocationSelection } from '@/services/storage/prefsStorage';
 import { useAppSelector } from '@/store/hooks';
-import { openWebApp } from '@/services/web/openWebApp';
 import { formatRelative } from '@/utils/format';
-
-const WEB_MESSAGE = 'Open OneTouchReview on the web to fix this.';
 
 /** One icon per notification kind (Notifications tab); urgent / warning / info set the colour. */
 const KIND_ICONS: Record<string, IconName> = {
@@ -33,6 +30,20 @@ const KIND_ICONS: Record<string, IconName> = {
   sms_registration: 'chatbubble-outline',
   texts_low: 'speedometer-outline',
   not_sent: 'alert-circle-outline',
+  // Added October 14, 2026 (API-GAPS #29).
+  billing: 'card-outline',
+  meta_reconnect: 'logo-facebook',
+  email_sender: 'mail-outline',
+  email_problem: 'mail-unread-outline',
+  site_review: 'star-half-outline',
+  site_reviews: 'cloud-download-outline',
+  card_form: 'document-text-outline',
+  assistant: 'chatbubbles-outline',
+  google_profile: 'business-outline',
+  review_shield_flagged: 'shield-outline',
+  review_shield_removed: 'shield-checkmark-outline',
+  review_changed: 'create-outline',
+  follow_ups: 'repeat-outline',
 };
 
 /** Screen 13: the bell list — last 30 days, newest first. */
@@ -60,45 +71,7 @@ function NotificationsList({ location }: { location: LocationSelection }) {
         .catch(() => badge.refresh());
     }
 
-    const target = notificationTarget(n);
-    switch (target.type) {
-      case 'feedback':
-        router.push({ pathname: '/feedback/[id]', params: { id: String(target.id), source: target.source } });
-        return;
-      case 'feedbackList':
-        router.push('/feedback');
-        return;
-      case 'review':
-        router.push({ pathname: '/reviews/[id]', params: { id: String(target.id) } });
-        return;
-      case 'reviewsAiDrafts':
-        router.push({ pathname: '/reviews', params: { status: AI_DRAFT_STATUS } });
-        return;
-      case 'reviewsList':
-        router.push('/reviews');
-        return;
-      case 'reports':
-        router.push({ pathname: '/reports', params: target.pointId ? { point: String(target.pointId) } : {} });
-        return;
-      case 'clientsNotSent':
-        router.navigate({ pathname: '/clients', params: { filter: 'not_sent' } });
-        return;
-      case 'webOnly':
-        Alert.alert(n.title, [n.body, WEB_MESSAGE].filter(Boolean).join('\n\n'), [
-          { text: 'Close', style: 'cancel' },
-          { text: 'Open on the web', onPress: () => openWebApp() },
-        ]);
-        return;
-      case 'messageOnly':
-        // texts_low: never a link to billing or plans.
-        Alert.alert(n.title, n.body ?? undefined);
-        return;
-      case 'notInAppYet':
-        Alert.alert(n.title, [n.body, `${target.feature} isn’t in this version of the app yet.`].filter(Boolean).join('\n\n'));
-        return;
-      default:
-        Alert.alert(n.title, n.body ?? undefined);
-    }
+    openTarget(router, notificationTarget(n), { title: n.title, body: n.body });
   };
 
   const markAll = async () => {
