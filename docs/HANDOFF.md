@@ -1,4 +1,15 @@
-# Session handoff — 2026-10-16
+# Session handoff — 2026-10-16 (updated 2026-10-19)
+
+## Not built yet: the Sheet's October 19 update (AI Insights)
+Found 2026-10-19; on hold by decision ("not now"). The Sheet added:
+- **Endpoints rows 117–136**, screen 18 AI Insights: `GET /insights/summary`, `/overview`, `/complaints` (+ `/{id}`, `/{id}/evidence`), `/loves` (+ `/{id}/evidence`), `/team` (+ `/{staffMemberId}`), `POST /insights/team/resolve`, `GET/PUT /insights/tracking`, `POST/PATCH/DELETE /insights/action-notes`, `GET /insights/briefings` (+ `/{id}`), `/insights/status`, `/insights/settings` (read-only in the app; changing it is web only). All 19 routes answer 401 without a token on production (checked 2026-10-19).
+- Row 136: `GET/PUT /notification-preferences` gains `insights` ("AI Insights updates (in the bell)", shown only when AI Insights is on).
+- Dashboard tab row 8b: an AI Insights card after "This month", before "Reviews from your requests".
+- Notifications tab rows 25–26: bell kind `insights` (bell only, never a push) with events briefing_ready, new_recurring_high, worsening, urgent_concern, ready.
+- Errors tab rows 44–48: INSIGHTS_UNAVAILABLE, MERGED (open `details.redirect_id`), LOCATION_NOT_FOUND, VERSION_CONFLICT, CONFIRM_REQUIRED / NO_SOURCE (web only).
+- Screen checklist rows 4, 8, 19. Hidden everywhere when `GET /insights/summary` says `available: false` (or 503 / 403 PLAN_REQUIRED). Rates are 0–1; a null rate is never shown as 0 %; no staff ranking; team items for owners and managers only.
+
+Suggested order when it's picked up: API layer + types → settings switch + bell kind → dashboard card → AI Insights screen (overview, complaints + evidence, loves, team, briefings, Don't track, notes).
 
 Read `CLAUDE.md` first (project rules), then `docs/API-GAPS.md` (contract questions and the API team's answers).
 
